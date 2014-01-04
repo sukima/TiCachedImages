@@ -1,0 +1,28 @@
+{
+  "name": "TiCachedImages",
+  "description": "An example of how to cache files in a Titanium application",
+  "version": "0.1.0",
+  "authors": [
+    {
+      "name": "Devin Weaver",
+      "email": "suki@tritarget,org"
+    }
+  ],
+  "devDependencies": {
+    "coffee-script": "~> 1.6.3",
+    "jasmine-node": "~> 1.2.0",
+    "proxyquire": "~> 0.4.0",
+    "mockti": "~> 0.1.0",
+    "titanium": "3.1.2",
+    "alloy": "~1.2.2",
+    "q": "~0.9.7",
+    "express": "~3.4.7"
+  },
+  "scripts": {
+    "test": "coffee spec/specRunner.coffee",
+    "start": "coffee launcher.coffee"
+  },
+  "engines": {
+    "node": ">=0.8"
+  }
+}

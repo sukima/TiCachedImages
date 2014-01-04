@@ -1,0 +1,10 @@
+<Alloy>
+	<Window class="container">
+    <ImageView id="pic"/>
+    <Picker>
+      <PickerRow title="Dog"/>
+      <PickerRow title="Bird"/>
+      <PickerRow title="Cat"/>
+    </Picker>
+	</Window>
+</Alloy>
