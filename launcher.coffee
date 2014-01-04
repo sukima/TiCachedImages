@@ -65,24 +65,8 @@ while args.length
       # console.log "  -a, --android      Build and install on an attached Android device"
       console.log "  -s, --sim simtype  One of: iphone, iphone4, iphone5 (default)"
       console.log "  --sdk version      Choose the SDK version (default: 7.0)"
-      console.log "  --make-config      Create a dev_config.json template file"
       console.log "  --                 Stop reading arguments and pass everything else"
       console.log "                     directly to the titanium cli"
-      process.exit 0
-    when "--make-config"
-      if exists("dev_config.json")
-        console.log "dev_config.json already exists."
-        process.exit 1
-      defaults =
-        server: "path/to/server-or-null-to-disable"
-        profiles:
-          development: "Development Provisioning Profile UUID"
-          production:  "Release Provisioning Profile UUID"
-        certs:
-          development: "Name of certificate for development"
-          production:  "Name of certificate for release"
-      writeFile("dev_config.json", JSON.stringify(defaults, null, 2))
-      console.log("Saved a default dev_conf.json file.")
       process.exit 0
     when "-v", "--verbose"
       options.verbose = on
@@ -103,12 +87,6 @@ while args.length
       args = []
     else
       options.extraArgs.push arg
-
-try
-  config = require("./dev_config.json")
-catch
-  console.log "dev_config.json file missing. Please create one with --make-config."
-  process.exit(128)
 
 if options.clean
   promisedSpawn(titanium, "clean").then ->
@@ -139,8 +117,8 @@ else
 titaniumArgs.push "--log-level", "debug" if options.verbose
 titaniumArgs.push options.extraArgs...
 
-unless options.install or options.android or not config.server?
-  require("./#{config.server}")
+unless options.install or options.android
+  require("./dev_server/server")
 
 waitingForTitanium = promisedSpawn titanium, titaniumArgs...
 waitingForTitanium.then (val) ->
