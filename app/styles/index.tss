@@ -1,8 +1,27 @@
 ".container": {
-	backgroundColor:"white"
+  layout:          "vertical",
+  backgroundColor: "white"
 },
-"Label": {
-	width: Ti.UI.SIZE,
-	height: Ti.UI.SIZE,
-	color: "#000"
-} 
+
+".picture": {
+  top:          20,
+  width:        300,
+  height:       240,
+  borderWidth:  2,
+  borderRadias: 6
+},
+
+"#callbackTab": {
+  title: "Callbacks",
+  icon:  "icons/callback.png"
+},
+
+"#promiseTab": {
+  title: "Promises",
+  icon:  "icons/promise.png"
+},
+
+"Picker": {
+  top:  0,
+  type: Ti.UI.PICKER_TYPE_PLAIN
+}

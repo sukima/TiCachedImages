@@ -1,10 +1,24 @@
 <Alloy>
-	<Window class="container">
-    <ImageView id="pic"/>
-    <Picker>
-      <PickerRow title="Dog"/>
-      <PickerRow title="Bird"/>
-      <PickerRow title="Cat"/>
-    </Picker>
-	</Window>
+  <TabGroup>
+    <Tab id="callbackTab">
+      <Window title="Callback Example" class="container">
+        <ImageView id="callbackImage" class="picture"/>
+        <Picker id="callbackPicker">
+          <PickerRow title="Dog"/>
+          <PickerRow title="Bird"/>
+          <PickerRow title="Cat"/>
+        </Picker>
+      </Window>
+    </Tab>
+    <Tab id="promiseTab">
+      <Window title="Promise Example" class="container">
+        <ImageView id="promiseImage" class="picture"/>
+        <Picker id="promisePicker">
+          <PickerRow title="Dog"/>
+          <PickerRow title="Bird"/>
+          <PickerRow title="Cat"/>
+        </Picker>
+      </Window>
+    </Tab>
+  </TabGroup>
 </Alloy>
