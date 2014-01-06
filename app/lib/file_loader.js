@@ -127,6 +127,11 @@ File.prototype.expunge = function() {
 
 // File::getPath {{{2
 File.prototype.getPath = function() {
+  return this.file_path.resolve();
+};
+
+// File.getFile {{{2
+File.prototype.getFile = function() {
   return this.file_path;
 };
 
@@ -160,7 +165,8 @@ FileLoader.download = function(url, callbacks) {
   if (file.is_cached && !file.expired()) {
     file.updateLastUsedAt().save();
     // Poor man's nextTick:
-    setTimeout(function() { attemptCallback(file.getPath()); }, 0);
+    Ti.API.info("Cached " + file.id + ": " + url);
+    setTimeout(function() { attemptCallback(file); }, 0);
     return;
   }
 
@@ -173,7 +179,7 @@ FileLoader.download = function(url, callbacks) {
       return;
     }
     file.updateLastUsedAt().save();
-    attemptCallback(file.getPath());
+    attemptCallback(file);
   }
 
   function attemptCallback(value) {
@@ -191,6 +197,8 @@ FileLoader.download = function(url, callbacks) {
   });
   http.open("GET", url);
   http.send();
+
+  Ti.API.info("Downloading " + file.id + ": " + url);
 };
 
 // #downloadP - Same as #download but returns a promise {{{2
@@ -204,7 +212,8 @@ FileLoader.downloadP = function(url) {
   var file = File.fromURL(url);
   if (file.is_cached && !file.expired()) {
     file.updateLastUsedAt().save();
-    return Q(file.getPath());
+    Ti.API.info("Cached " + file.id + ": " + url);
+    return Q(file);
   }
 
   var waitForHttp = Q.defer();
@@ -217,6 +226,8 @@ FileLoader.downloadP = function(url) {
   http.open("GET", url);
   http.send();
 
+  Ti.API.info("Downloading " + file.id + ": " + url);
+
   return waitForHttp.promise
     .get("source")
     .get("responseData")
@@ -225,7 +236,7 @@ FileLoader.downloadP = function(url) {
         throw new Error("Failed to save data from " + url + " to " + file.getPath());
       }
       file.updateLastUsedAt().save();
-      return file.getPath();
+      return file;
     });
 };
 

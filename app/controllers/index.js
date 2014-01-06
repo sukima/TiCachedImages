@@ -13,8 +13,8 @@ function callbackImageChange(e) {
   var url = urlFromSelection(e.selectedValue[0]);
   Ti.API.info("Requested URL: " + url);
   FileLoader.download(url, {
-    onload: function(file_path) {
-      $.callbackImage.image = file_path;
+    onload: function(file) {
+      $.callbackImage.image = file.getFile();
     },
     onerror: showError
   });
@@ -24,8 +24,9 @@ function promiseImageChange(e) {
   var url = urlFromSelection(e.selectedValue[0]);
   Ti.API.info("Requested URL: " + url);
   FileLoader.download(url)
-    .then(function(file_path) {
-      $.promiseImage.image = file_path;
+    .invoke("getFile")
+    .then(function(file) {
+      $.promiseImage.image = file;
     })
     .fail(showError)
     .done();
