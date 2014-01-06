@@ -156,6 +156,7 @@ File.fromURL = function(url) {
 };
 
 // FileLoader {{{1
+var pending_promises;
 var FileLoader = {};
 
 // spawnHTTPClient {{{2
@@ -222,26 +223,42 @@ FileLoader.downloadP = function(url) {
     throw new Error("Promises are not supported without the Q library. Install q.js into Resources/ or app/lib/");
   }
 
+  if (!pending_promises) { pending_promises = {dispatch_queue: []}; }
+
+  function requestDispatch() {
+    var waitForDispatch = Q.defer();
+    pending_promises.dispatch_queue.push(waitForDispatch);
+    return waitForDispatch.promise;
+  }
+
+  function dispatchNextPromise() {
+    var defer;
+    if (pending_promises.dispatch_queue.length < MAX_ASYNC_TASKS) {
+      defer = pending_promises.dispatch_queue.shift();
+      if (defer) { defer.resolve(); }
+    }
+  }
+
   var file = File.fromURL(url);
+
+  if (pending_promises[file.id]) {
+    Ti.API.info("Pending " + file.id + ": " + url);
+    return pending_promises[file.id];
+  }
+
   if (file.is_cached && !file.expired()) {
     file.updateLastUsedAt().save();
     Ti.API.info("Cached " + file.id + ": " + url);
     return Q(file);
   }
 
-  var waitForHttp = Q.defer();
-  var http = Ti.Network.createHTTPClient({
-    onload:       waitForHttp.resolve,
-    onerror:      waitForHttp.reject,
-    ondatastream: waitForHttp.notify,
-    timeout:      5000
-  });
-  http.open("GET", url);
-  http.send();
-
-  Ti.API.info("Downloading " + file.id + ": " + url);
-
-  return waitForHttp.promise
+  var waitingForDownload = requestDispatch()
+    .then(function() {
+      var waitForHttp = Q.defer();
+      spawnHTTPClient(url, waitForHttp);
+      Ti.API.info("Downloading " + file.id + ": " + url);
+      return waitForHttp.promise;
+    })
     .get("source")
     .get("responseData")
     .then(function(data) {
@@ -251,7 +268,16 @@ FileLoader.downloadP = function(url) {
       file.downloaded = true;
       file.updateLastUsedAt().save();
       return file;
+    })
+    .fin(function() {
+      delete pending_promises[file.id];
+      dispatchNextPromise();
     });
+
+  pending_promises[file.id] = waitingForDownload;
+  dispatchNextPromise();
+
+  return waitingForDownload;
 };
 
 // pruneStaleCache - (alias: gc) Remove stale cache files {{{2
