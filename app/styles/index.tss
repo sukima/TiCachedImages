@@ -21,7 +21,7 @@
   icon:  "icons/promise.png"
 },
 
-"#tableList": {
+"#listTab": {
   title: "TableView",
   icon:  "icons/notepad.png"
 },

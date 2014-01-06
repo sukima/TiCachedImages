@@ -32,33 +32,43 @@ function promiseImageChange(e) {
     .done();
 }
 
-(function() {
-  var tags = [
-    "sun",
-    "sea",
-    "tree",
-    "cat",
-    "dog"
-  ];
+var photos = [
+  "IMG_7651_t.png",
+  "IMG_7654_t.png",
+  "IMG_7656_t.png",
+  "IMG_7660_v1_t.png",
+  "IMG_7663_t.png",
+  "IMG_7672_v1_t.png",
+  "IMG_7688_t.png",
+  "IMG_7690_t.png",
+  "IMG_7691_t.png",
+  "IMG_7699_v1_t.png",
+  "IMG_7766_t.png",
+  "IMG_7778_t.png",
+  "IMG_7784_t.png",
+  "IMG_7786_t.png",
+  "IMG_7789_t.png",
+  "IMG_7790_t.png",
+  "IMG_7809_v1_t.png"
+];
 
-  function makeRowFor(tag) {
-    var row = Ti.UI.createTableViewRow({ title: tag });
-    FileLoader.download("http://flickholdr.com/128/128/" + tag)
-      .then(function(path) { row.leftImage = path; }).done();
-    return row;
+function refreshTableData() {
+  function makeRowFor(photo) {
+    return Alloy.createController("PhotoRow", {photo: photo}).getView();
   }
 
-  var tag_index = 0, i, row, rows = [];
+  var photo_index = 0, i, row, rows = [];
   for (i = 0; i < 100; i++) {
-    rows.push(makeRowFor(tags[tag_index]));
-    tag_index++;
-    tag_index = (tag_index >= tags.length) ? 0 : tag_index;
+    rows.push(makeRowFor(photos[photo_index]));
+    photo_index++;
+    photo_index = (photo_index >= photos.length) ? 0 : photo_index;
   }
 
   $.tableList.setData(rows);
-})();
+}
 
 $.callbackPicker.addEventListener("change", callbackImageChange);
 $.promisePicker.addEventListener("change", promiseImageChange);
 
+refreshTableData();
 $.index.open();

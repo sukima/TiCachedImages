@@ -1,0 +1,27 @@
+"TableViewRow": {
+  height: "auto"
+},
+
+"#photo": {
+  top:    10,
+  left:   10,
+  bottom: 10,
+  width:  128,
+  height: 128
+},
+
+"#title": {
+  top:    10,
+  left:   148,
+  width:  Ti.UI.FILL,
+  height: Ti.UI.SIZE
+},
+
+"#info": {
+  bottom: 10,
+  left:   148,
+  color:  "#f00000",
+  font: {
+    fontSize: 12
+  }
+}
