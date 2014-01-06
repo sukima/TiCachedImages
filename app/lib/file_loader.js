@@ -156,9 +156,19 @@ File.fromURL = function(url) {
 };
 
 // FileLoader {{{1
-var throttle_warn = false;
-var pending_promises;
+var pending_tasks = {dispatch_queue:[]};
 var FileLoader = {};
+
+// dispatchNextTask {{{2
+function dispatchNextTask() {
+  var task;
+  if (pending_tasks.dispatch_queue.length < MAX_ASYNC_TASKS) {
+    task = pending_tasks.dispatch_queue.shift();
+    if (!task) { return; }
+    if (task.resolve) { task.resolve(); }
+    else { poorMansNextTick(task); }
+  }
+}
 
 // spawnHTTPClient {{{2
 function spawnHTTPClient(url, callbacks) {
@@ -232,27 +242,17 @@ FileLoader.downloadP = function(url) {
     throw new Error("Promises are not supported without the Q library. Install q.js into Resources/ or app/lib/");
   }
 
-  if (!pending_promises) { pending_promises = {dispatch_queue: []}; }
-
   function requestDispatch() {
     var waitForDispatch = Q.defer();
-    pending_promises.dispatch_queue.push(waitForDispatch);
+    pending_tasks.dispatch_queue.push(waitForDispatch);
     return waitForDispatch.promise;
-  }
-
-  function dispatchNextPromise() {
-    var defer;
-    if (pending_promises.dispatch_queue.length < MAX_ASYNC_TASKS) {
-      defer = pending_promises.dispatch_queue.shift();
-      if (defer) { defer.resolve(); }
-    }
   }
 
   var file = File.fromURL(url);
 
-  if (pending_promises[file.id]) {
+  if (pending_tasks[file.id]) {
     Ti.API.info("Pending " + file.id + ": " + url);
-    return pending_promises[file.id];
+    return pending_tasks[file.id];
   }
 
   if (file.is_cached && !file.expired()) {
@@ -279,12 +279,12 @@ FileLoader.downloadP = function(url) {
       return file;
     })
     .fin(function() {
-      delete pending_promises[file.id];
-      dispatchNextPromise();
+      delete pending_tasks[file.id];
+      dispatchNextTask();
     });
 
-  pending_promises[file.id] = waitingForDownload;
-  dispatchNextPromise();
+  pending_tasks[file.id] = waitingForDownload;
+  dispatchNextTask();
 
   return waitingForDownload;
 };
@@ -299,8 +299,10 @@ FileLoader.pruneStaleCache = FileLoader.gc = function(force) {
     }
   }
 };
+
+// Export File class {{{2
+FileLoader.File = File;
 // }}}1
 
-FileLoader.File = File;
 module.exports  = FileLoader;
 /* vim:set ts=2 sw=2 et fdm=marker: */
