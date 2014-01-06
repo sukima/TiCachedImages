@@ -4,6 +4,8 @@
 
 // Constants {{{1
 // Load constants allowing them to be overwriten with configuration.
+var HTTP_TIMEOUT    = 10000;
+var MAX_ASYNC_TASKS = 10;
 var CACHE_METADATA_PROPERTY, EXPIRATION_TIME, CACHE_PATH_PREFIX;
 (function() {
   var have_alloy = (typeof Alloy !== 'undefined' && Alloy !== null && Alloy.CFG);
@@ -153,9 +155,22 @@ File.fromURL = function(url) {
   return new File(File.idFromUrl(url));
 };
 
-// Exports {{{1
+// FileLoader {{{1
 var FileLoader = {};
 
+// spawnHTTPClient {{{2
+function spawnHTTPClient(url, callbacks) {
+  var http = Ti.Network.createHTTPClient({
+    onload:       callbacks.resolve,
+    onerror:      callbacks.reject,
+    ondatastream: callbacks.notify,
+    timeout:      HTTP_TIMEOUT
+  });
+  http.open("GET", url);
+  http.send();
+}
+
+// Exports {{{1
 // #download - Attempt to download and cache url {{{2
 FileLoader.download = function(url, callbacks) {
   // Promises are better. Why would you not use them?!
@@ -190,14 +205,11 @@ FileLoader.download = function(url, callbacks) {
     }
   }
 
-  var http = Ti.Network.createHTTPClient({
-    onload:       onload,
-    onerror:      callbacks.onerror,
-    ondatastream: callbacks.ondatastream,
-    timeout:      5000
+  spawnHTTPClient(url, {
+    resolve: onload,
+    reject:  callbacks.onerror,
+    notify:  callbacks.ondatastream
   });
-  http.open("GET", url);
-  http.send();
 
   Ti.API.info("Downloading " + file.id + ": " + url);
 };
