@@ -31,6 +31,10 @@
   type: Ti.UI.PICKER_TYPE_PLAIN
 },
 
+"#refreshBtn": {
+  title: "Refresh"
+},
+
 "#clearCacheBtn": {
   title: "Clear Cache"
 }

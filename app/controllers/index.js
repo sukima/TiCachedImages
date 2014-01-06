@@ -69,6 +69,7 @@ function refreshTableData() {
 
 $.callbackPicker.addEventListener("change", callbackImageChange);
 $.promisePicker.addEventListener("change", promiseImageChange);
+$.refreshBtn.addEventListener("click", refreshTableData);
 $.clearCacheBtn.addEventListener("click", function() {
   FileLoader.gc(true);
   refreshTableData();
