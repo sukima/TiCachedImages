@@ -72,7 +72,10 @@ $.promisePicker.addEventListener("change", promiseImageChange);
 $.refreshBtn.addEventListener("click", refreshTableData);
 $.clearCacheBtn.addEventListener("click", function() {
   FileLoader.gc(true);
-  refreshTableData();
+  Ti.UI.createAlertDialog({
+    title:   "Cache expunged",
+    message: "Press 'refresh' to see the effect"
+  }).show();
 });
 
 refreshTableData();
