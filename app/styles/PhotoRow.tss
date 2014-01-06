@@ -14,14 +14,15 @@
   top:    10,
   left:   148,
   width:  Ti.UI.FILL,
-  height: Ti.UI.SIZE
+  height: 25
 },
 
 "#info": {
-  bottom: 10,
+  top:    35,
   left:   148,
-  color:  "#f00000",
+  width:  Ti.UI.FILL,
+  height: Ti.UI.SIZE,
   font: {
-    fontSize: 12
+    fontSize: 14
   }
 }
