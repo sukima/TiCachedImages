@@ -156,6 +156,7 @@ File.fromURL = function(url) {
 };
 
 // FileLoader {{{1
+var throttle_warn = false;
 var pending_promises;
 var FileLoader = {};
 
@@ -176,6 +177,14 @@ function spawnHTTPClient(url, callbacks) {
 FileLoader.download = function(url, callbacks) {
   // Promises are better. Why would you not use them?!
   if (!callbacks) { return FileLoader.downloadP(url); }
+  if (!throttle_warn) {
+    Ti.API.warn(
+      "Using callbacks does NOT throttle requests. " +
+      "This can be dangerous as all downloads happen at the same time.\n" +
+      "It is preferred to use FileLoader.download(url).then(...) after installing q.js"
+    );
+    throttle_warn = true;
+  }
 
   var file = File.fromURL(url);
   if (file.is_cached && !file.expired()) {
