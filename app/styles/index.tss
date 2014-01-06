@@ -21,6 +21,11 @@
   icon:  "icons/promise.png"
 },
 
+"#tableList": {
+  title: "TableView",
+  icon:  "icons/notepad.png"
+},
+
 "Picker": {
   top:  0,
   type: Ti.UI.PICKER_TYPE_PLAIN

@@ -20,5 +20,10 @@
         </Picker>
       </Window>
     </Tab>
+    <Tab id="listTab">
+      <Window title="Table Example" class="container">
+        <TableView id="tableList"/>
+      </Window>
+    </Tab>
   </TabGroup>
 </Alloy>
