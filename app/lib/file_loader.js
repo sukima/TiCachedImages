@@ -302,6 +302,78 @@ FileLoader.pruneStaleCache = FileLoader.gc = function(force) {
 
 // Export File class {{{2
 FileLoader.File = File;
+
+// PinkySwear - Minimalistic implementation of the Promises/A+ spec {{{1
+// Public Domain. Use, modify and distribute it any way you like. No attribution required.
+// NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+// https://github.com/timjansen/PinkySwear.js
+(function(target) {
+  /* jshint eqnull:true */
+  function isFunction(f,o) { return typeof f == 'function'; }
+  function defer(callback) { setTimeout(callback, 0); }
+
+  target.pinkySwear = function pinkySwear() {
+    var state;           // undefined/null = pending, true = fulfilled, false = rejected
+    var values = [];     // an array of values as arguments for the then() handlers
+    var deferred = [];   // functions to call when set() is invoked
+
+    var set = function promise(newState, newValues) {
+      if (state == null) {
+        state = newState;
+        values = newValues;
+        defer(function() {
+          for (var i = 0; i < deferred.length; i++)
+            deferred[i]();
+        });
+      }
+    };
+    set.then = function(onFulfilled, onRejected, onProgress) {
+      var newPromise = pinkySwear();
+      var callCallbacks = function() {
+        try {
+          var f = (state ? onFulfilled : onRejected);
+          if (isFunction(f)) {
+            var r = f.apply(null, values);
+            if (r && isFunction(r.then))
+              r.then(
+                function(value){newPromise(true,  [value]);},
+                function(value){newPromise(false, [value]);}
+              );
+            else
+              newPromise(true, [r]);
+          }
+          else
+            newPromise(state, values);
+        }
+        catch (e) {
+          newPromise(false, [e]);
+        }
+      };
+      if (state != null)
+        defer(callCallbacks);
+      else
+        deferred.push(callCallbacks);
+      return newPromise;
+    };
+
+    // always(func) is the same as then(func, func)
+    set.always = set.fin = function(func) { return set.then(func, func); };
+
+    // error(func) is the same as then(0, func)
+    set.error = set.fail = function(func) { return set.then(0, func); };
+
+    set.get = function(prop) {
+      return set.then(function(value) { return value[prop]; });
+    };
+
+    set.invoke = function(prop) {
+      var args = [].slice.call(arguments, 1);
+      return set.then(function(value) { return value[prop].call(void 0, args); });
+    };
+
+    return set;
+  };
+})(FileLoader);
 // }}}1
 
 module.exports  = FileLoader;
