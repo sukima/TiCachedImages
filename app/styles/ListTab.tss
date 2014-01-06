@@ -1,0 +1,12 @@
+".container": {
+  layout:          "vertical",
+  backgroundColor: "white"
+},
+
+"#settingsButton": {
+  title: "Settings"
+},
+
+"#clearCacheBtn": {
+  title: "Actions"
+}

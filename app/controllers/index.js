@@ -32,51 +32,7 @@ function promiseImageChange(e) {
     .done();
 }
 
-var photos = [
-  "IMG_7651_t.png",
-  "IMG_7654_t.png",
-  "IMG_7656_t.png",
-  "IMG_7660_v1_t.png",
-  "IMG_7663_t.png",
-  "IMG_7672_v1_t.png",
-  "IMG_7688_t.png",
-  "IMG_7690_t.png",
-  "IMG_7691_t.png",
-  "IMG_7699_v1_t.png",
-  "IMG_7766_t.png",
-  "IMG_7778_t.png",
-  "IMG_7784_t.png",
-  "IMG_7786_t.png",
-  "IMG_7789_t.png",
-  "IMG_7790_t.png",
-  "IMG_7809_v1_t.png"
-];
-
-function refreshTableData() {
-  function makeRowFor(photo) {
-    return Alloy.createController("PhotoRow", {photo: photo}).getView();
-  }
-
-  var photo_index = 0, i, row, rows = [];
-  for (i = 0; i < 100; i++) {
-    rows.push(makeRowFor(photos[photo_index]));
-    photo_index++;
-    photo_index = (photo_index >= photos.length) ? 0 : photo_index;
-  }
-
-  $.tableList.setData(rows);
-}
-
 $.callbackPicker.addEventListener("change", callbackImageChange);
 $.promisePicker.addEventListener("change", promiseImageChange);
-$.refreshBtn.addEventListener("click", refreshTableData);
-$.clearCacheBtn.addEventListener("click", function() {
-  FileLoader.gc(true);
-  Ti.UI.createAlertDialog({
-    title:   "Cache expunged",
-    message: "Press 'refresh' to see the effect"
-  }).show();
-});
 
-refreshTableData();
 $.index.open();

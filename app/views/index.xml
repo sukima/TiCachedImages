@@ -21,15 +21,7 @@
       </Window>
     </Tab>
     <Tab id="listTab">
-      <Window title="Table Example" class="container">
-        <LeftNavButton>
-          <Button id="refreshBtn"/>
-        </LeftNavButton>
-        <RightNavButton>
-          <Button id="clearCacheBtn"/>
-        </RightNavButton>
-        <TableView id="tableList"/>
-      </Window>
+      <Require id="listWindow" src="ListTab"/>
     </Tab>
   </TabGroup>
 </Alloy>

@@ -1,0 +1,11 @@
+<Alloy>
+  <Window title="Table Example" class="container">
+    <LeftNavButton>
+      <Button id="clearCacheBtn"/>
+    </LeftNavButton>
+    <RightNavButton>
+      <Button id="settingsButton"/>
+    </RightNavButton>
+    <TableView id="tableList"/>
+  </Window>
+</Alloy>
