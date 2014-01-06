@@ -241,11 +241,11 @@ FileLoader.downloadP = function(url) {
 };
 
 // pruneStaleCache - (alias: gc) Remove stale cache files {{{2
-FileLoader.pruneStaleCache = FileLoader.gc = function() {
+FileLoader.pruneStaleCache = FileLoader.gc = function(force) {
   var id, file;
   for (id in metadata) {
     file = new File(id);
-    if (file.expired()) {
+    if (force || file.expired()) {
       file.expunge();
     }
   }
