@@ -254,5 +254,6 @@ FileLoader.pruneStaleCache = FileLoader.gc = function(force) {
 };
 // }}}1
 
-module.exports = FileLoader;
+FileLoader.File = File;
+module.exports  = FileLoader;
 /* vim:set ts=2 sw=2 et fdm=marker: */
