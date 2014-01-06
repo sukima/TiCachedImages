@@ -29,4 +29,8 @@
 "Picker": {
   top:  0,
   type: Ti.UI.PICKER_TYPE_PLAIN
+},
+
+"#clearCacheBtn": {
+  title: "Clear Cache"
 }

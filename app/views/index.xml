@@ -22,6 +22,9 @@
     </Tab>
     <Tab id="listTab">
       <Window title="Table Example" class="container">
+        <RightNavButton>
+          <Button id="clearCacheBtn"/>
+        </RightNavButton>
         <TableView id="tableList"/>
       </Window>
     </Tab>
