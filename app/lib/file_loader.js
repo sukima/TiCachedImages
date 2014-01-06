@@ -178,6 +178,7 @@ FileLoader.download = function(url, callbacks) {
       }
       return;
     }
+    file.downloaded = true;
     file.updateLastUsedAt().save();
     attemptCallback(file);
   }
@@ -235,6 +236,7 @@ FileLoader.downloadP = function(url) {
       if (!file.write(data)) {
         throw new Error("Failed to save data from " + url + " to " + file.getPath());
       }
+      file.downloaded = true;
       file.updateLastUsedAt().save();
       return file;
     });

@@ -7,7 +7,9 @@ FileLoader.download(url)
   .then(function(file) {
     // Ti.API.info("Displaying image: " + file.getPath());
     $.photo.image = file.getFile();
-    $.info.text = "(" + file.id.substr(0, 12) + ")";
+    $.info.color = file.downloaded ? "#CF0000" : "#07D100";
+    $.info.text = (file.downloaded ? "Downloaded" : "Cached") +
+      "\n(" + file.id.substr(0, 12) + ")";
   })
   .fail(function(error) {
     var message = error.message || error.error || error;
