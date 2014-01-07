@@ -381,8 +381,8 @@ var pinkySwear = FileLoader.pinkySwear = (function() {
     };
 
     set.invoke = function(prop) {
-      var args = [].slice.call(arguments, 1);
-      return set.then(function(value) { return value[prop].call(void 0, args); });
+      var args = [].slice.call(arguments, 1) || [];
+      return set.then(function(value) { return value[prop].apply(value, args); });
     };
 
     return set;
