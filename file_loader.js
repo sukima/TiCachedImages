@@ -99,7 +99,7 @@
 //
 // - `caching_property_key` - The `Ti.App.Property key to use for storing the
 //                            cache metadata.
-// - `cache_expiration` - How long a cached file is concidered expired since
+// - `cache_expiration` - How long a cached file is considered expired since
 //                        the last time it was requested.
 // - `cache_directory` - The directory to save the cache files. On iOS the
 //                       `applicationSupportDirectory` is prefixed. on all
@@ -110,7 +110,7 @@
 // [3]: http://promises-aplus.github.io/promises-spec/
 
 // Constants {{{1
-// Load constants allowing them to be overwriten with configuration.
+// Load constants allowing them to be overwritten with configuration.
 var HTTP_TIMEOUT    = 10000;
 var MAX_ASYNC_TASKS = 10;
 var CACHE_METADATA_PROPERTY, EXPIRATION_TIME, CACHE_PATH_PREFIX;
@@ -255,8 +255,8 @@ File.getMD5 = function(data) {
 
 // File.idFromUrl {{{2
 File.idFromUrl = function(url) {
-  // Insanely simple conversion to keep id unique to the url and prevent
-  // possible illegal filesystem characters and removes path seperators.
+  // Insanely simple conversion to keep id unique to the URL and prevent
+  // possible illegal file system characters and removes path separators.
   // MD5 should be fast enough not that this is repeated so much.
   return Ti.Utils.md5HexDigest(url);
 };
@@ -300,7 +300,7 @@ function spawnHTTPClient(url, pinkyPromise) {
   http.send();
 }
 
-// FileLoader.download - Attempt to download and cache url {{{2
+// FileLoader.download - Attempt to download and cache URL {{{2
 FileLoader.download = function(args) {
   var waitingForPath;
   var url = args.url || args;
