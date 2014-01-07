@@ -307,15 +307,16 @@ FileLoader.File = File;
 // Public Domain. Use, modify and distribute it any way you like. No attribution required.
 // NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
 // https://github.com/timjansen/PinkySwear.js
-(function(target) {
+var pinkySwear = FileLoader.pinkySwear = (function() {
   /* jshint eqnull:true */
   function isFunction(f,o) { return typeof f == 'function'; }
   function defer(callback) { setTimeout(callback, 0); }
 
-  target.pinkySwear = function pinkySwear() {
+  function pinkySwear() {
     var state;           // undefined/null = pending, true = fulfilled, false = rejected
     var values = [];     // an array of values as arguments for the then() handlers
     var deferred = [];   // functions to call when set() is invoked
+    var progress = [];   // functoins to call when notify() is invoked
 
     var set = function promise(newState, newValues) {
       if (state == null) {
@@ -353,8 +354,21 @@ FileLoader.File = File;
         defer(callCallbacks);
       else
         deferred.push(callCallbacks);
+      if (isFunction(onProgress))
+        set.progress(function(value) {
+          newPromise.notify(onProgress(value));
+        });
       return newPromise;
     };
+
+    set.notify = function(value) {
+      defer(function() {
+        for (var i = 0; i < progress.length; i++)
+          progress[i](value);
+      });
+    };
+
+    set.progress = function(onProgress) { progress.push(onProgress); return set; };
 
     // always(func) is the same as then(func, func)
     set.always = set.fin = function(func) { return set.then(func, func); };
@@ -372,8 +386,10 @@ FileLoader.File = File;
     };
 
     return set;
-  };
-})(FileLoader);
+  }
+
+  return pinkySwear;
+})();
 // }}}1
 
 module.exports  = FileLoader;
