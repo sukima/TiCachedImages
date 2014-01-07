@@ -12,7 +12,8 @@ function showError(e) {
 function callbackImageChange(e) {
   var url = urlFromSelection(e.selectedValue[0]);
   Ti.API.info("Requested URL: " + url);
-  FileLoader.download(url, {
+  FileLoader.download({
+    url:    url,
     onload: function(file) {
       $.callbackImage.image = file.getFile();
     },
@@ -28,8 +29,7 @@ function promiseImageChange(e) {
     .then(function(file) {
       $.promiseImage.image = file;
     })
-    .fail(showError)
-    .done();
+    .fail(showError);
 }
 
 $.callbackPicker.addEventListener("change", callbackImageChange);

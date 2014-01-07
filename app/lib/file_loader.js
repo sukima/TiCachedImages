@@ -159,7 +159,14 @@ File.fromURL = function(url) {
 var pending_tasks = {dispatch_queue:[]};
 var FileLoader = {};
 
-// dispatchNextTask {{{2
+// requestDispatch (private) {{{2
+function requestDispatch() {
+  var waitForDispatch = pinkySwear();
+  pending_tasks.dispatch_queue.push(waitForDispatch);
+  return waitForDispatch;
+}
+
+// dispatchNextTask (private) {{{2
 function dispatchNextTask() {
   var task;
   if (pending_tasks.dispatch_queue.length < MAX_ASYNC_TASKS) {
@@ -170,103 +177,45 @@ function dispatchNextTask() {
   }
 }
 
-// spawnHTTPClient {{{2
-function spawnHTTPClient(url, callbacks) {
+// spawnHTTPClient (private) {{{2
+function spawnHTTPClient(url, pinkyPromise) {
   var http = Ti.Network.createHTTPClient({
-    onload:       callbacks.resolve,
-    onerror:      callbacks.reject,
-    ondatastream: callbacks.notify,
+    onload:       pinkyPromise.resolve,
+    onerror:      pinkyPromise.reject,
+    ondatastream: pinkyPromise.notify,
     timeout:      HTTP_TIMEOUT
   });
   http.open("GET", url);
   http.send();
 }
 
-// Exports {{{1
-// #download - Attempt to download and cache url {{{2
-FileLoader.download = function(url, callbacks) {
-  // Promises are better. Why would you not use them?!
-  if (!callbacks) { return FileLoader.downloadP(url); }
-  if (!throttle_warn) {
-    Ti.API.warn(
-      "Using callbacks does NOT throttle requests. " +
-      "This can be dangerous as all downloads happen at the same time.\n" +
-      "It is preferred to use FileLoader.download(url).then(...) after installing q.js"
-    );
-    throttle_warn = true;
-  }
-
-  var file = File.fromURL(url);
-  if (file.is_cached && !file.expired()) {
-    file.updateLastUsedAt().save();
-    // Poor man's nextTick:
-    Ti.API.info("Cached " + file.id + ": " + url);
-    setTimeout(function() { attemptCallback(file); }, 0);
-    return;
-  }
-
-  // I hate this callback crap
-  function onload() {
-    if (!file.write(this.responseData)) {
-      if (typeof callbacks.onerror === 'function') {
-        callbacks.onerror({message: "Failed to save data from " + url + " to " + file.getPath()});
-      }
-      return;
-    }
-    file.downloaded = true;
-    file.updateLastUsedAt().save();
-    attemptCallback(file);
-  }
-
-  function attemptCallback(value) {
-    var cb = callbacks.onload || callbacks;
-    if (typeof cb === 'function') {
-      cb(value);
-    }
-  }
-
-  spawnHTTPClient(url, {
-    resolve: onload,
-    reject:  callbacks.onerror,
-    notify:  callbacks.ondatastream
-  });
-
-  Ti.API.info("Downloading " + file.id + ": " + url);
-};
-
-// #downloadP - Same as #download but returns a promise {{{2
-FileLoader.downloadP = function(url) {
-  var Q;
-  try { Q = require("q"); }
-  catch (e) {
-    throw new Error("Promises are not supported without the Q library. Install q.js into Resources/ or app/lib/");
-  }
-
-  function requestDispatch() {
-    var waitForDispatch = Q.defer();
-    pending_tasks.dispatch_queue.push(waitForDispatch);
-    return waitForDispatch.promise;
-  }
-
+// FileLoader.download - Attempt to download and cache url {{{2
+FileLoader.download = function(args) {
+  var waitingForPath;
+  var url = args.url || args;
   var file = File.fromURL(url);
 
   if (pending_tasks[file.id]) {
     Ti.API.info("Pending " + file.id + ": " + url);
+    pending_tasks[file.id].then(args.onload, args.onerror, args.ondatastream);
     return pending_tasks[file.id];
   }
 
   if (file.is_cached && !file.expired()) {
     file.updateLastUsedAt().save();
     Ti.API.info("Cached " + file.id + ": " + url);
-    return Q(file);
+    waitingForPath = pinkySwear();
+    waitingForPath.then(args.onload, args.onerror, args.ondatastream);
+    waitingForPath(true, [file]);
+    return waitingForPath;
   }
 
   var waitingForDownload = requestDispatch()
     .then(function() {
-      var waitForHttp = Q.defer();
+      var waitForHttp = pinkySwear();
       spawnHTTPClient(url, waitForHttp);
       Ti.API.info("Downloading " + file.id + ": " + url);
-      return waitForHttp.promise;
+      return waitForHttp;
     })
     .get("source")
     .get("responseData")
@@ -289,7 +238,7 @@ FileLoader.downloadP = function(url) {
   return waitingForDownload;
 };
 
-// pruneStaleCache - (alias: gc) Remove stale cache files {{{2
+// FileLoader.pruneStaleCache - (alias: gc) Remove stale cache files {{{2
 FileLoader.pruneStaleCache = FileLoader.gc = function(force) {
   var id, file;
   for (id in metadata) {
@@ -328,6 +277,7 @@ var pinkySwear = FileLoader.pinkySwear = (function() {
         });
       }
     };
+
     set.then = function(onFulfilled, onRejected, onProgress) {
       var newPromise = pinkySwear();
       var callCallbacks = function() {

@@ -17,10 +17,11 @@ function onError(error) {
 }
 
 if (args.use_promises) {
-  FileLoader.download(url).then(updateRow).fail(onError).done();
+  FileLoader.download(url).then(updateRow).fail(onError);
 }
 else {
-  FileLoader.download(url, {
+  FileLoader.download({
+    url:     url,
     onload:  updateRow,
     onerror: onError,
   });
