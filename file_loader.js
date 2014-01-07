@@ -104,6 +104,7 @@
 // - `cache_directory` - The directory to save the cache files. On iOS the
 //                       `applicationSupportDirectory` is prefixed. on all
 //                       others the `applicationDataDirectory` is prefixed.
+// - `cache_requests` - The number of simultaneous network requests allowed.
 //
 // [1]: http://developer.appcelerator.com/question/125483/how-to-create-a-generic-image-cache-sample-code#answer-218718
 // [2]: https://github.com/timjansen/PinkySwear.js
@@ -112,8 +113,7 @@
 // Constants {{{1
 // Load constants allowing them to be overwritten with configuration.
 var HTTP_TIMEOUT    = 10000;
-var MAX_ASYNC_TASKS = 10;
-var CACHE_METADATA_PROPERTY, EXPIRATION_TIME, CACHE_PATH_PREFIX;
+var CACHE_METADATA_PROPERTY, EXPIRATION_TIME, CACHE_PATH_PREFIX, MAX_ASYNC_TASKS;
 (function(global) {
   var have_alloy = (typeof Alloy !== 'undefined' && Alloy !== null && Alloy.CFG);
 
@@ -130,6 +130,7 @@ var CACHE_METADATA_PROPERTY, EXPIRATION_TIME, CACHE_PATH_PREFIX;
   CACHE_METADATA_PROPERTY = loadConfig("cache_property_key") || "file_loader_cache_metadata";
   CACHE_PATH_PREFIX       = loadConfig("cache_directory")    || "cached_files";
   EXPIRATION_TIME         = loadConfig("cache_expiration")   || 3600000; // 60 minutes
+  MAX_ASYNC_TASKS         = loadConfig("cache_requests")     || 10;
 
 })(this);
 

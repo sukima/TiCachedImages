@@ -159,6 +159,7 @@ file.
 - `cache_directory` - The directory to save the cache files. On iOS the
                       `applicationSupportDirectory` is prefixed. on all
                       others the `applicationDataDirectory` is prefixed.
+- `cache_requests` - The number of simultaneous network requests allowed.
 
 ## Advance Promises
 
