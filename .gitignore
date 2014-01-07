@@ -5,3 +5,4 @@ npm-debug.log
 tmp
 Resources/
 node_modules/
+plugins/**/*.pyc

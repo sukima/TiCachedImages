@@ -15,6 +15,7 @@ process.on "SIGINT", ->
   for childProcess in childProcesses
     console.log "Killing process (#{childProcess.pid})" if options.verbose
     childProcess.kill "SIGINT"
+  server.close() if server?
 
 shouldGracefullyExit = ->
   gracefullyExit and not options.android and not options.install
@@ -62,8 +63,9 @@ while args.length
       console.log "  -c, --clean        Clean up build files"
       console.log "  -d, --debug        Attach to a running ti-inspector server for debugging"
       console.log "  -i, --install      Build and install on an attached iOS device"
-      # console.log "  -a, --android      Build and install on an attached Android device"
-      console.log "  -s, --sim simtype  One of: iphone, iphone4, iphone5 (default)"
+      console.log "  -a, --android      Build and install on an attached Android device"
+      console.log "  -s, --server       Spawn the dev server only (don't also build)"
+      console.log "  --sim simtype      One of: iphone, iphone4, iphone5 (default)"
       console.log "  --sdk version      Choose the SDK version (default: 7.0)"
       console.log "  --                 Stop reading arguments and pass everything else"
       console.log "                     directly to the titanium cli"
@@ -76,9 +78,11 @@ while args.length
       options.debug = on
     when "-i", "--install"
       options.install = yes
-    # when "-a", "--android"
-      # options.android = yes
-    when "-s", "--sim"
+    when "-a", "--android"
+      options.android = yes
+    when "-s", "--server"
+      options.server_only = yes
+    when "--sim"
       options.simtype = args.shift()
     when "--sdk"
       options.sdk = args.shift()
@@ -118,20 +122,21 @@ titaniumArgs.push "--log-level", "debug" if options.verbose
 titaniumArgs.push options.extraArgs...
 
 unless options.install or options.android
-  require("./dev_server/server")
+  server = require("./dev_server/server")
 
-waitingForTitanium = promisedSpawn titanium, titaniumArgs...
-waitingForTitanium.then (val) ->
-  return val unless options.android
-  fetchAppInfo().then ({app_id,app_name}) ->
-    waitingForAdb = promisedSpawn "adb", "uninstall", app_id
-    waitingForAdb.then ->
-      promisedSpawn "adb", "install", joinPath(__dirname, "build", "android", "bin", "app.apk")
-    .then ->
-      promisedSpawn "adb", "shell", "am", "start", "#{app_id}/.#{app_name}Activity"
-.then ->
-  process.exit 0
-.fail (err) ->
-  outputError err unless gracefullyExit
-  process.exit 127
-.done()
+unless options.server_only
+  waitingForTitanium = promisedSpawn titanium, titaniumArgs...
+  waitingForTitanium.then (val) ->
+    return val unless options.android
+    fetchAppInfo().then ({app_id,app_name}) ->
+      waitingForAdb = promisedSpawn "adb", "uninstall", app_id
+      waitingForAdb.then ->
+        promisedSpawn "adb", "install", joinPath(__dirname, "build", "android", "bin", "app.apk")
+      .then ->
+        promisedSpawn "adb", "shell", "am", "start", "#{app_id}/.#{app_name}Activity"
+  .then ->
+    process.exit 0
+  .fail (err) ->
+    outputError err unless gracefullyExit
+    process.exit 127
+  .done()
