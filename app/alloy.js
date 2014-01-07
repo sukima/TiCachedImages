@@ -9,3 +9,15 @@
 // object. For example:
 //
 // Alloy.Globals.someGlobalFunction = function(){};
+
+// Expunge stale caches
+// Uses a timeout for simplicity. Usually you might trigger this on a
+// background task or some other application specific time.
+var FileLoader = require("file_loader");
+
+function cleanCache() {
+  Ti.API.info("Cleaning stale cache");
+  FileLoader.gc();
+}
+
+setInterval(FileLoader.gc, 60000); // Every minute

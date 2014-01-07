@@ -1,9 +1,11 @@
 {
-	"global": {}, 
-	"env:development": {}, 
-	"env:test": {}, 
-	"env:production": {}, 
-	"os:ios": {}, 
-	"os:android": {}, 
-	"dependencies": {}
+  "global": {},
+  "env:development": {
+    "cache_expiration": 30
+  },
+  "env:test": {},
+  "env:production": {},
+  "os:ios": {},
+  "os:android": {},
+  "dependencies": {}
 }
