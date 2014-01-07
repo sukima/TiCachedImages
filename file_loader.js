@@ -94,10 +94,10 @@
 //
 // ## Configuration
 //
-// You can adjust the following variables either defined a globals or in your
-// `Alloy.CFG` namespace:
+// You can adjust the following variables either defined globals or in your
+// `Alloy.CFG` namespace (Before your first `require()`):
 //
-// - `caching_property_key` - The `Ti.App.Property` key to use for storing the
+// - `cache_property_key` - The `Ti.App.Property` key to use for storing the
 //                            cache metadata.
 // - `cache_expiration` - How long a cached file is considered expired since
 //                        the last time it was requested.
@@ -114,39 +114,24 @@
 var HTTP_TIMEOUT    = 10000;
 var MAX_ASYNC_TASKS = 10;
 var CACHE_METADATA_PROPERTY, EXPIRATION_TIME, CACHE_PATH_PREFIX;
-(function() {
+(function(global) {
   var have_alloy = (typeof Alloy !== 'undefined' && Alloy !== null && Alloy.CFG);
 
-  if (have_alloy && Alloy.CFG.cache_metadata_property) {
-    CACHE_METADATA_PROPERTY = Alloy.CFG.caching_property_key;
-  }
-  else if (typeof caching_property_key !== 'undefined' && caching_property_key !== null) {
-    CACHE_METADATA_PROPERTY = CACHING_PROPERTY_KEY;
-  }
-  else {
-    CACHE_METADATA_PROPERTY = "file_loader_cache_metadata";
-  }
-
-  if (have_alloy && Alloy.CFG.cache_expiration) {
-    EXPIRATION_TIME = Alloy.CFG.cache_expiration;
-  }
-  else if (typeof cache_expiration !== 'undefined' && cache_expiration !== null) {
-    EXPIRATION_TIME = cache_expiration;
-  }
-  else {
-    EXPIRATION_TIME = 3600000; // 60 minutes
+  function loadConfig(name) {
+    /* jshint eqnull:true */
+    if (have_alloy && Alloy.CFG[name] != null) {
+      return Alloy.CFG[name];
+    }
+    if (global[name] != null) {
+      return global[name];
+    }
   }
 
-  if (have_alloy && Alloy.CFG.cache_directory) {
-    CACHE_PATH_PREFIX = Alloy.CFG.cache_directory;
-  }
-  else if (typeof cache_directory !== 'undefined' && cache_directory !== null) {
-    CACHE_PATH_PREFIX = cache_directory;
-  }
-  else {
-    CACHE_PATH_PREFIX = "cached_files";
-  }
-})();
+  CACHE_METADATA_PROPERTY = loadConfig("cache_property_key") || "file_loader_cache_metadata";
+  CACHE_PATH_PREFIX       = loadConfig("cache_directory")    || "cached_files";
+  EXPIRATION_TIME         = loadConfig("cache_expiration")   || 3600000; // 60 minutes
+
+})(this);
 
 // Metadata {{{1
 var metadata = Ti.App.Properties.getObject(CACHE_METADATA_PROPERTY) || {};
