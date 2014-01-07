@@ -368,6 +368,9 @@ var pinkySwear = FileLoader.pinkySwear = (function() {
       });
     };
 
+    set.resolve = function(value) { set(true,  [value]); };
+    set.reject  = function(value) { set(false, [value]); };
+
     set.progress = function(onProgress) { progress.push(onProgress); return set; };
 
     // always(func) is the same as then(func, func)
