@@ -29,7 +29,9 @@
 // - `getPath()`  - Returns a string to the cached file. Used for properties
 //                  that need a string not a file object (`TableViewRow.leftImage`)
 // - `expired()`  - Returns true/false for when the expired time has elapsed
-//                  since this URL was last requested.
+//                  since this URL was last requested. By passing in true you will
+//                  invalidate this file's cache forcing a download on next
+//                  request.
 // - `downloaded` - true if this URL was just downloaded, false if it was
 //                  already in cached.
 // - `is_cached`  - true if this file has been cached or not.
@@ -220,7 +222,11 @@ File.prototype.exists = function() {
 };
 
 // File::expired {{{2
-File.prototype.expired = function() {
+File.prototype.expired = function(invalidate) {
+  if (invalidate) {
+    this.last_used_at = 0;
+    this.save();
+  }
   return ((new Date().getTime() - this.last_used_at) > EXPIRATION_TIME);
 };
 
