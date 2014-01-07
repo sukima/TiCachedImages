@@ -371,7 +371,10 @@ var pinkySwear = FileLoader.pinkySwear = (function() {
     set.progress = function(onProgress) { progress.push(onProgress); return set; };
 
     // always(func) is the same as then(func, func)
-    set.always = set.fin = function(func) { return set.then(func, func); };
+    set.always = function(func) { return set.then(func, func); };
+
+    // fin(func) is like always() but doesn't modify the promise chain
+    set.fin = function(func) { set.then(func, func); return set; };
 
     // error(func) is the same as then(0, func)
     set.error = set.fail = function(func) { return set.then(0, func); };
