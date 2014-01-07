@@ -1,4 +1,6 @@
-# FileLoader - A caching file downloader for Titanium
+# FileLoader
+
+A caching file downloader for Titanium
 
 Public Domain. Use, modify and distribute it any way you like. No attribution required.
 
@@ -150,9 +152,9 @@ to your Alloy.CFG namespace by placing them in your `app/config.json` file. If
 your not using Alloy you can set the variables as globals in your `app.js`
 file.
 
-- `caching_property_key` - The `Ti.App.Property key to use for storing the
+- `caching_property_key` - The `Ti.App.Property` key to use for storing the
                            cache metadata.
-- `cache_expiration` - How long a cached file is concidered expired since
+- `cache_expiration` - How long a cached file is considered expired since
                        the last time it was requested.
 - `cache_directory` - The directory to save the cache files. On iOS the
                       `applicationSupportDirectory` is prefixed. on all
@@ -171,3 +173,22 @@ file.
 Public Domain. Use, modify and distribute it any way you like. No attribution required.
 To the extent possible under law, Tim Jansen has waived all copyright and related or neighboring rights to PinkySwear.
 Please see http://creativecommons.org/publicdomain/zero/1.0/
+
+
+----------
+With the modified pinkySwear promise you have the following methods at your
+disposal:
+
+- `then(fn)`     - Attach callbacks (fulfilled, rejected, progress). Returns
+                   a new promise based on the return values / thrown
+                   exceptions of the callbacks.
+- `fail(fn)`     - Same as `then(null, fn)`
+- `progress(fn)` - Same as `then(null, null, fn)`
+- `always(fn)`   - Return a new promise which will resolve regardless if the
+                   former promise is fulfilled or rejected.
+- `fin(fn)`      - Execute the function when the promise is fulfilled or
+                   rejected regardless. Returns the original promise to
+                   continue the chain.
+- `get(prop)`    - Same as `then(function(value) { return value[prop]; })`
+- `invoke(prop, args...)` -
+            Same as `then(function(value) { return value[prop](args...); })`

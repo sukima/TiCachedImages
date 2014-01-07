@@ -97,7 +97,7 @@
 // You can adjust the following variables either defined a globals or in your
 // `Alloy.CFG` namespace:
 //
-// - `caching_property_key` - The `Ti.App.Property key to use for storing the
+// - `caching_property_key` - The `Ti.App.Property` key to use for storing the
 //                            cache metadata.
 // - `cache_expiration` - How long a cached file is considered expired since
 //                        the last time it was requested.
