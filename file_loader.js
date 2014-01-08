@@ -152,7 +152,7 @@ var cache_path = (function() {
   if (!cache_dir.exists()) {
     cache_dir.createDirectory();
   }
-  return cache_dir.resolve();
+  return cache_dir;
 })();
 
 // Class: File {{{1
@@ -161,7 +161,7 @@ var cache_path = (function() {
 function File(id) {
   this.id        = id;
   var cache_data = metadata[this.id];
-  this.file_path = Ti.Filesystem.getFile(cache_path, this.id);
+  this.file_path = Ti.Filesystem.getFile(cache_path.resolve(), this.id);
 
   if (cache_data) {
     this.is_cached    = this.exists();
@@ -197,15 +197,15 @@ File.prototype.write = function(data) {
   // A Titanium bug cause this to always return false. We need to manually
   // check it exists. And assume it worked.
   // (https://jira.appcelerator.org/browse/TIMOB-1658)
-  this.file_path.write(data);
+  this.getFile().write(data);
   this.md5 = File.getMD5(data);
-  Ti.API.debug("Wrote " + this.getPath() + " (" + this.md5 + ")"); // DEBUG
+  // Ti.API.debug("Wrote " + this.getPath() + " (" + this.md5 + ")"); // DEBUG
   return this.exists();
 };
 
 // File::exists {{{2
 File.prototype.exists = function() {
-  return this.file_path.exists();
+  return this.getFile().exists();
 };
 
 // File::expired {{{2
@@ -219,8 +219,8 @@ File.prototype.expired = function(invalidate) {
 
 // File::expunge {{{2
 File.prototype.expunge = function() {
-  this.file_path.deleteFile();
-  Ti.API.debug("Expunged " + this.id); // DEBUG
+  this.getFile().deleteFile();
+  // Ti.API.debug("Expunged " + this.id); // DEBUG
   delete metadata[this.id];
   saveMetaData();
   this.is_cached = false;
@@ -228,7 +228,7 @@ File.prototype.expunge = function() {
 
 // File::getPath {{{2
 File.prototype.getPath = function() {
-  return this.file_path.resolve();
+  return this.getFile().resolve();
 };
 
 // File.getFile {{{2
