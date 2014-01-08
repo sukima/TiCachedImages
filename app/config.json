@@ -1,7 +1,7 @@
 {
   "global": {},
   "env:development": {
-    "cache_expiration": 30
+    "cache_expiration": 30000
   },
   "env:test": {},
   "env:production": {},
