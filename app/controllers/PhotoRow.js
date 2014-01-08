@@ -4,26 +4,38 @@ var args = arguments[0] || {};
 var url = "http://photos.tritarget.org/photos/washington2012/" + args.photo;
 
 function updateRow(file) {
+  Ti.API.info("Displaying " + file);
   $.photo.image = file.getFile();
   $.info.color = file.downloaded ? "#CF0000" : "#07D100";
   $.info.text = (file.downloaded ? "Downloaded" : "Cached") +
     "\n(" + file.id.substr(0, 12) + ")";
 }
 
+function progressDisplay(e) {
+  var progress = e.progress;
+  Ti.API.info("Pending progress for " + url + " ~> " + progress);
+  $.info.color = "#0000CF";
+  $.info.text = "Pending: " + Math.floor(progress * 100) + "%";
+}
+
 function onError(error) {
   var message = error.message || error.error || error;
-  Ti.API.error("" + message + " loading cache with url: " + url);
+  Ti.API.error("'" + message + "' while loading: " + url);
   // We don't want to throw an error here. It would be lost.
 }
 
 if (args.use_promises) {
-  FileLoader.download(url).then(updateRow).fail(onError);
+  FileLoader.download(url)
+    .progress(progressDisplay)
+    .then(updateRow)
+    .fail(onError);
 }
 else {
   FileLoader.download({
-    url:     url,
-    onload:  updateRow,
-    onerror: onError,
+    url:          url,
+    onload:       updateRow,
+    onerror:      onError,
+    ondatastream: progressDisplay
   });
 }
 
