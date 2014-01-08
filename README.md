@@ -163,33 +163,120 @@ file.
 
 ## Advance Promises
 
+The implementation in this repository is exposed for use outside this library.
+The source here is available for modification and so you could copy paste it
+out if interested. To use as is create a new promise with
+`FileLoader.pinkySwear()`. You can fulfill or reject a promise by passing in a
+true false to the promise as if it was a normal function. (See Helpers below
+for better convenience methods).
+
+    var promise = FileLoader.pinkySwear();
+
+A fair warning that because promises use the return value or thrown exception
+to determine their state it is possible to have exceptions gobbled by the
+promise chain. It is recommended to always end your promises chains with a
+`fail()` to capture any unhanded exceptions.
+
 #### Chaining
+
+With the Promise/A+ spec each call to `then()` returns a new promise that is
+fulfilled or rejected based on the state of the parent promise. So by chaining
+each callback is waiting on the former to continue. However, errors will also
+propagate allowing you to have a catch all if needed.
+
+    FileLoader.pinkySwear()
+      .then(step1)
+      .then(step2)
+      .fail(opps)
+
+step1 will receive the file object. What ever step1 returns becomes the value
+passed into step2. If either download, step1, or step2 throw an exception then
+opps will be called with the error passed in as the first argument.
 
 #### Helpers
 
+The modified implementation of pinkySwear available in this library offers some
+helper methods to aid in convenience.
+
+To fulfill / reject a promise you can call `resolve()` and `reject()`. The
+following are equivalent ways to resolve a pinkySwear:
+
+    var promise = FileLoader.pinkySwear();
+    // fulfill
+    promise.resolve(args...);
+    promise(true, [args...]);
+    // reject
+    promise.reject(args...);
+    promise(false, [args...]);
+
+Sometimes you want something to execute after a promise is resolved regardless
+if it was fulfilled or rejected. In this case we have two helpers.
+
+`always()` will execute regardless of the state of the promise. It returns a
+new promise that you can use to continue the chain. It is important to know
+that the return value will be the value passed into further callbacks after the
+chain. This will also cancel the effect of a rejection if the always function
+returns a value instead of throws an exception.
+
+An alternative helper function called `fin()` does the same thing but does not
+interrupt the promise chain allowing you to execute a callback and the original
+state of the promise is not changed. The return value / exception thrown in the
+`fin()` callback is ignored.
+
+Many times you may be interested in a property or result from a method on the
+object that gets passed as the fulfilled value. To add some convenience the
+following methods can be used in the chain to narrow down or transform the
+value you want later in the chain. An example of such would be the File object
+that `download()` passes. It has a `getPath()` method for the string path and
+also a `downloaded` property. Here are two examples of using those in a promise
+chain. Be aware that the need for these is purely a style choice and are not
+needed to interact with this library.
+
+    var waitingForImage = FileLoader.download("http://...");
+    waitingForImage.invoke("getPath").then(function(path_string) {
+      Ti.API.info("Downloaded to " + path_string);
+    });
+
+    waitingForImage.get("downloaded").then(function(has_downloaded) {
+      var message = (has_downloaded ? "by downloding" : "in cache");
+      Ti.API.info("File found " + message + ".");
+    });
+
 #### Progress Notifications
+
+If you are interested in the progress of a download you can attach a callback
+to `progress()` which will periodically be executed with a value between `0.0`
+and `1.0`. If you make your own `pinkySwear()` you can send those notifications
+by calling the `notify()` method.
+
+#### Integrating with other promise libraries
+
+The implementation of promises in this library is *extreamly* minimalistic.
+There is much more power and expressiveness in other promise libraries. Because
+pinkySwear is Promise/A+ complaint it is easy to have your preferred promise
+implementation wrap this one. The following is an example of using the popular
+[Q library][Q]:
+
+    var Q          = require("q");
+    var FileLoader = require("file_loader");
+
+    var qPromise = Q(FileLoader.download("http://..."));
+    qPromise.then(...).fail(...).done();
+
+I highly encourage you to take a look at a full fledge promise library and
+become comfortable using promises in your own code. For an example on ways that
+promises can benifit a Titanium project take a look at my
+[Titanium Promise Exmple][5] and for more examples on the power of promises my
+[Promises Demo][6].
+
+Have fun.
+
+[Q]: http://documentup.com/kriskowal/q/
+[5]: https://github.com/sukima/promises-titanium
+[6]: http://sukima.github.io/promise-demo/
 
 ## Licensing
 
 Public Domain. Use, modify and distribute it any way you like. No attribution required.
 To the extent possible under law, Tim Jansen has waived all copyright and related or neighboring rights to PinkySwear.
 Please see http://creativecommons.org/publicdomain/zero/1.0/
-
-
-----------
-With the modified pinkySwear promise you have the following methods at your
-disposal:
-
-- `then(fn)`     - Attach callbacks (fulfilled, rejected, progress). Returns
-                   a new promise based on the return values / thrown
-                   exceptions of the callbacks.
-- `fail(fn)`     - Same as `then(null, fn)`
-- `progress(fn)` - Same as `then(null, null, fn)`
-- `always(fn)`   - Return a new promise which will resolve regardless if the
-                   former promise is fulfilled or rejected.
-- `fin(fn)`      - Execute the function when the promise is fulfilled or
-                   rejected regardless. Returns the original promise to
-                   continue the chain.
-- `get(prop)`    - Same as `then(function(value) { return value[prop]; })`
-- `invoke(prop, args...)` -
-            Same as `then(function(value) { return value[prop](args...); })`
