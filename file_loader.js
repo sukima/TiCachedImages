@@ -231,6 +231,18 @@ File.prototype.getPath = function() {
   return this.getFile().resolve();
 };
 
+// File::toString {{{2
+File.prototype.toString = function() {
+  return "" + this.id + ": " +
+    (this.is_cached ? "cached" : "new") + " file" +
+    (this.pending ? " (pending)" : "") +
+    (this.downloaded ? " (downloaded)" : "") +
+    (this.expired() ? " (expired)" : "") +
+    (this.last_used_at ? ", Last used: " + this.last_used_at : "") +
+    (this.md5 ? ", MD5: " + this.md5 : "") +
+    " " + this.getPath();
+};
+
 // File.getFile {{{2
 File.prototype.getFile = function() {
   return this.file_path;
@@ -295,14 +307,14 @@ FileLoader.download = function(args) {
   var file = File.fromURL(url);
 
   if (pending_tasks[file.id]) {
-    Ti.API.debug("Pending " + file.id + ": " + url); // DEBUG
+    Ti.API.debug("Pending " + url + ": " + file); // DEBUG
     pending_tasks[file.id].then(args.onload, args.onerror, args.ondatastream);
     return pending_tasks[file.id];
   }
 
   if (file.is_cached && !file.expired()) {
     file.updateLastUsedAt().save();
-    Ti.API.debug("Cached " + file.id + ": " + url); // DEBUG
+    Ti.API.debug("Cached " + url + ": " + file); // DEBUG
     waitingForPath = pinkySwear();
     waitingForPath.then(args.onload, args.onerror, args.ondatastream);
     waitingForPath(true, [file]);
@@ -313,14 +325,14 @@ FileLoader.download = function(args) {
     .then(function() {
       var waitForHttp = pinkySwear();
       spawnHTTPClient(url, waitForHttp);
-      Ti.API.debug("Downloading " + file.id + ": " + url); // DEBUG
+      Ti.API.debug("Downloading " + url + ": " + file); // DEBUG
       return waitForHttp;
     })
     .get("source")
     .get("responseData")
     .then(function(data) {
       if (!file.write(data)) {
-        throw new Error("Failed to save data from " + url + " to " + file.getPath());
+        throw new Error("Failed to save data from " + url + ": " + file);
       }
       file.downloaded = true;
       file.updateLastUsedAt().save();
@@ -328,9 +340,11 @@ FileLoader.download = function(args) {
     })
     .fin(function() {
       delete pending_tasks[file.id];
+      file.pending = false;
       dispatchNextTask();
     });
 
+  file.pending = true;
   pending_tasks[file.id] = waitingForDownload;
   waitingForDownload.then(args.onload, args.onerror, args.ondatastream);
   dispatchNextTask();
