@@ -1,5 +1,8 @@
 <Alloy>
   <TabGroup platform="ios">
+    <Tab id="listTab">
+      <Require id="listWindow" src="ListTab"/>
+    </Tab>
     <Tab id="callbackTab">
       <Window title="Callback Example" class="container">
         <ImageView id="callbackImage" class="picture"/>
@@ -19,9 +22,6 @@
           <PickerRow title="Cat"/>
         </Picker>
       </Window>
-    </Tab>
-    <Tab id="listTab">
-      <Require id="listWindow" src="ListTab"/>
     </Tab>
   </TabGroup>
   <Require id="listWindow" src="ListTab" platform="android"/>
