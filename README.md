@@ -245,9 +245,16 @@ needed to interact with this library.
 #### Progress Notifications
 
 If you are interested in the progress of a download you can attach a callback
-to `progress()` which will periodically be executed with a value between `0.0`
-and `1.0`. If you make your own `pinkySwear()` you can send those notifications
-by calling the `notify()` method.
+to `progress()` which will periodically be executed with an event object who
+has a property called `progress`. It has a  value between `0.0` and `1.0`. If
+you make your own `pinkySwear()` you can send those notifications by calling
+the `notify()` method.
+
+    FileLoader.download("http://...")
+      .progress(function(e) {
+        var progress = Math.floor(e.progress * 100);
+        Ti.API.info("Progress: " + progress + "%");
+      });
 
 #### Integrating with other promise libraries
 
