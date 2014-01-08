@@ -50,9 +50,11 @@ function promptForSettigns() {
     switch (e.index) {
       case 0:
         use_promises = true;
+        Alloy.Globals.toast("Using Promises");
         break;
       case 1:
         use_promises = false;
+        Alloy.Globals.toast("Using Callbacks");
         break;
     }
   });
@@ -70,9 +72,11 @@ function promptForActions() {
     switch (e.index) {
       case 0:
         refreshTableData();
+        Alloy.Globals.toast("Table refreshed");
         break;
       case 1:
         FileLoader.gc(true);
+        Alloy.Globals.toast("Cache expunged, refresh to see result");
         break;
     }
   });

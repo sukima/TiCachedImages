@@ -18,6 +18,11 @@ var FileLoader = require("file_loader");
 function cleanCache() {
   Ti.API.info("Cleaning stale cache");
   FileLoader.gc();
+  Alloy.Globals.toast("Stale caches expunged");
 }
+
+Alloy.Globals.toast = function(message) {
+  Ti.App.fireEvent("toast", {message: message});
+};
 
 setInterval(cleanCache, 60000); // Every minute

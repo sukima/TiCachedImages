@@ -33,4 +33,28 @@
 "Picker": {
   top:  0,
   type: Ti.UI.PICKER_TYPE_PLAIN
+},
+
+".toastView": {
+  width:           "200dp",
+  height:          Ti.UI.SIZE,
+  top:             125,
+  left:            60,
+  borderRadius:    "6dp",
+  backgroundColor: "#dd000000",
+  zIndex:          999,
+  touchEnabled:    false
+},
+
+".toastLabel": {
+  top:          10,
+  bottom:       10,
+  left:         10,
+  right:        10,
+  width:        Ti.UI.FILL,
+  height:       "auto",
+  color:        "#ffffffff",
+  textAlign:    Ti.UI.TEXT_ALIGNMENT_CENTER,
+  font:         { fontSize: "16dp" },
+  touchEnabled: false
 }
