@@ -199,6 +199,7 @@ File.prototype.write = function(data) {
   // (https://jira.appcelerator.org/browse/TIMOB-1658)
   this.file_path.write(data);
   this.md5 = File.getMD5(data);
+  Ti.API.debug("Wrote " + this.getPath() + " (" + this.md5 + ")"); // DEBUG
   return this.exists();
 };
 
@@ -219,6 +220,7 @@ File.prototype.expired = function(invalidate) {
 // File::expunge {{{2
 File.prototype.expunge = function() {
   this.file_path.deleteFile();
+  Ti.API.debug("Expunged " + this.id); // DEBUG
   delete metadata[this.id];
   saveMetaData();
   this.is_cached = false;
@@ -293,14 +295,14 @@ FileLoader.download = function(args) {
   var file = File.fromURL(url);
 
   if (pending_tasks[file.id]) {
-    Ti.API.info("Pending " + file.id + ": " + url);
+    Ti.API.debug("Pending " + file.id + ": " + url); // DEBUG
     pending_tasks[file.id].then(args.onload, args.onerror, args.ondatastream);
     return pending_tasks[file.id];
   }
 
   if (file.is_cached && !file.expired()) {
     file.updateLastUsedAt().save();
-    Ti.API.info("Cached " + file.id + ": " + url);
+    Ti.API.debug("Cached " + file.id + ": " + url); // DEBUG
     waitingForPath = pinkySwear();
     waitingForPath.then(args.onload, args.onerror, args.ondatastream);
     waitingForPath(true, [file]);
@@ -311,7 +313,7 @@ FileLoader.download = function(args) {
     .then(function() {
       var waitForHttp = pinkySwear();
       spawnHTTPClient(url, waitForHttp);
-      Ti.API.info("Downloading " + file.id + ": " + url);
+      Ti.API.debug("Downloading " + file.id + ": " + url); // DEBUG
       return waitForHttp;
     })
     .get("source")
