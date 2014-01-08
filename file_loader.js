@@ -332,6 +332,7 @@ FileLoader.download = function(args) {
     });
 
   pending_tasks[file.id] = waitingForDownload;
+  waitingForDownload.then(args.onload, args.onerror, args.ondatastream);
   dispatchNextTask();
 
   return waitingForDownload;
