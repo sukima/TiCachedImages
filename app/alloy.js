@@ -20,4 +20,4 @@ function cleanCache() {
   FileLoader.gc();
 }
 
-setInterval(FileLoader.gc, 60000); // Every minute
+setInterval(cleanCache, 60000); // Every minute

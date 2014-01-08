@@ -32,7 +32,11 @@ function promiseImageChange(e) {
     .fail(showError);
 }
 
-$.callbackPicker.addEventListener("change", callbackImageChange);
-$.promisePicker.addEventListener("change", promiseImageChange);
-
-$.index.open();
+if (!OS_ANDROID) {
+  $.callbackPicker.addEventListener("change", callbackImageChange);
+  $.promisePicker.addEventListener("change", promiseImageChange);
+  $.index.open();
+}
+else {
+  $.listWindow.getView().open();
+}

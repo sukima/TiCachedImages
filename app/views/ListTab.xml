@@ -1,11 +1,15 @@
 <Alloy>
   <Window title="Table Example" class="container">
-    <LeftNavButton>
+    <LeftNavButton platform="ios">
       <Button id="clearCacheBtn"/>
     </LeftNavButton>
-    <RightNavButton>
+    <RightNavButton platform="ios">
       <Button id="settingsButton"/>
     </RightNavButton>
+    <View class="androidButtons" platform="android">
+      <Button id="clearCacheBtn"/>
+      <Button id="settingsButton"/>
+    </View>
     <TableView id="tableList"/>
   </Window>
 </Alloy>

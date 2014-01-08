@@ -3,10 +3,22 @@
   backgroundColor: "white"
 },
 
+".androidButtons[platform=android]": {
+  top:       0,
+  width:     Ti.UI.FILL,
+  height:    "40dp",
+  textAlign: Ti.UI.TEXTALIGN_CENTER,
+  layout:    "horizontal"
+},
+
 "#settingsButton": {
   title: "Settings"
 },
 
 "#clearCacheBtn": {
   title: "Actions"
+},
+
+"TableView[platform=android]": {
+  top: 30
 }

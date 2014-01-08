@@ -1,3 +1,7 @@
+"TabGroup": {
+  exitOnClose: true
+},
+
 ".container": {
   layout:          "vertical",
   backgroundColor: "white"
@@ -6,9 +10,9 @@
 ".picture": {
   top:          20,
   width:        300,
-  height:       240,
-  borderWidth:  2,
-  borderRadias: 6
+  height:       "240dp",
+  borderWidth:  "2dp",
+  borderRadias: "6dp"
 },
 
 "#callbackTab": {

@@ -13,7 +13,7 @@ function updateRow(file) {
 function onError(error) {
   var message = error.message || error.error || error;
   Ti.API.error("" + message + " loading cache with url: " + url);
-  // We don't want to throw an error here. That would be a mess.
+  // We don't want to throw an error here. It would be lost.
 }
 
 if (args.use_promises) {

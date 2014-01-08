@@ -5,24 +5,44 @@
 "#photo": {
   top:    10,
   left:   10,
-  bottom: 10,
+  bottom: 10
+},
+
+"#photo[platform=ios]": {
   width:  128,
   height: 128
 },
 
+"#photo[platform=android]": {
+  width:  "64dp",
+  height: "64dp"
+},
+
+".rowLabel[platform=ios]": {
+  left: 148
+},
+
+".rowLabel[platform=android]": {
+  left: 148
+},
+
+"#title[platform=ios]": {
+  height: 25
+},
+
 "#title": {
   top:    10,
-  left:   148,
-  width:  Ti.UI.FILL,
-  height: 25
+  width:  Ti.UI.FILL
+},
+
+"#info[platform=ios]": {
+  font: {
+    fontSize: 14
+  }
 },
 
 "#info": {
   top:    35,
-  left:   148,
   width:  Ti.UI.FILL,
-  height: Ti.UI.SIZE,
-  font: {
-    fontSize: 14
-  }
+  height: Ti.UI.SIZE
 }

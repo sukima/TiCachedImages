@@ -1,5 +1,5 @@
 <Alloy>
-  <TabGroup>
+  <TabGroup platform="ios">
     <Tab id="callbackTab">
       <Window title="Callback Example" class="container">
         <ImageView id="callbackImage" class="picture"/>
@@ -24,4 +24,5 @@
       <Require id="listWindow" src="ListTab"/>
     </Tab>
   </TabGroup>
+  <Require id="listWindow" src="ListTab" platform="android"/>
 </Alloy>
