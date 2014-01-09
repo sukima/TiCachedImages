@@ -387,10 +387,10 @@ var pinkySwear = FileLoader.pinkySwear = (function() {
   function defer(callback) { setTimeout(callback, 0); }
 
   function pinkySwear() {
-    var state;           // undefined/null = pending, true = fulfilled, false = rejected
-    var values = [];     // an array of values as arguments for the then() handlers
-    var deferred = [];   // functions to call when set() is invoked
-    var progress = [];   // functoins to call when notify() is invoked
+    var state;         // undefined/null = pending, true = fulfilled, false = rejected
+    var values = [];   // an array of values as arguments for the then() handlers
+    var deferred = []; // functions to call when set() is invoked
+    var progress_fns;  // functions to call when notify() is invoked
 
     var set = function promise(newState, newValues) {
       if (state == null) {
@@ -405,6 +405,8 @@ var pinkySwear = FileLoader.pinkySwear = (function() {
 
     set.then = function(onFulfilled, onRejected, onProgress) {
       var newPromise = pinkySwear();
+      newPromise.progress = function(v) { set.progress(v); return newPromise; };
+      newPromise.notify   = function(v) { set.notify(v); return newPromise; };
       var callCallbacks = function() {
         try {
           var f = (state ? onFulfilled : onRejected);
@@ -413,7 +415,8 @@ var pinkySwear = FileLoader.pinkySwear = (function() {
             if (r && isFunction(r.then))
               r.then(
                 function(value){newPromise(true,  [value]);},
-                function(value){newPromise(false, [value]);}
+                function(value){newPromise(false, [value]);},
+                function(value){newPromise.notify(value);}
               );
             else
               newPromise(true, [r]);
@@ -430,23 +433,26 @@ var pinkySwear = FileLoader.pinkySwear = (function() {
       else
         deferred.push(callCallbacks);
       if (isFunction(onProgress))
-        set.progress(function(value) {
-          newPromise.notify(onProgress(value));
-        });
+        set.progress(onProgress);
       return newPromise;
     };
 
     set.notify = function(value) {
       defer(function() {
-        for (var i = 0; i < progress.length; i++)
-          progress[i](value);
+        if (progress_fns != null)
+          for (var i = 0; i < progress_fns.length; i++)
+            progress_fns[i](value);
       });
     };
 
     set.resolve = function(value) { set(true,  [value]); };
     set.reject  = function(value) { set(false, [value]); };
 
-    set.progress = function(onProgress) { progress.push(onProgress); return set; };
+    set.progress = function(onProgress) {
+      if (progress_fns == null) { progress_fns = []; }
+      progress_fns.push(onProgress);
+      return set;
+    };
 
     // always(func) is the same as then(func, func)
     set.always = function(func) { return set.then(func, func); };
