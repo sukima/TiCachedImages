@@ -88,6 +88,8 @@
 // - `fin(fn)`      - Execute the function when the promise is fulfilled or
 //                    rejected regardless. Returns the original promise to
 //                    continue the chain.
+// - `done()`       - Any errors uncaught (or errors in the error function)
+//                    will be rethrown. Ends the chain.
 // - `get(prop)`    - Same as `then(function(value) { return value[prop]; })`
 // - `invoke(prop, args...)` -
 //             Same as `then(function(value) { return value[prop](args...); })`
@@ -462,6 +464,19 @@ var pinkySwear = FileLoader.pinkySwear = (function() {
 
     // error(func) is the same as then(0, func)
     set.error = set.fail = function(func) { return set.then(0, func); };
+
+    function handleUncaughtExceptions() {
+      if (state === false) {
+        throw (values.length > 1) ? values : values[0];
+      }
+    }
+
+    set.done = function() {
+      if (state != null)
+        defer(handleUncaughtExceptions);
+      else
+        deferred.push(handleUncaughtExceptions);
+    };
 
     set.get = function(prop) {
       return set.then(function(value) { return value[prop]; });

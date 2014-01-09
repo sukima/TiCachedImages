@@ -188,6 +188,7 @@ propagate allowing you to have a catch all if needed.
       .then(step1)
       .then(step2)
       .fail(opps)
+      .done();
 
 step1 will receive the file object. What ever step1 returns becomes the value
 passed into step2. If either download, step1, or step2 throw an exception then
@@ -242,6 +243,34 @@ needed to interact with this library.
       Ti.API.info("File found " + message + ".");
     });
 
+#### dealing with errors
+
+If any of the functions executed by the promise callback chain throw an
+exception the subsequent promises in the chain will be rejected. Unfortunatly
+if there was a reason that an exception were thrown in the error callback the
+exception would be confusingly lost and never sean. This is bad because as a
+developer you would never know that there was a problem in your own error
+checking code. Or if you never handled error checing at all any errors in the
+normal callbacks would alsoo dissapear. To prevent this end your promise chain
+with a `done()`. This will finish everything by throwing a final error if you
+haven't taken care of it before. It return nothing so it trully is the end of
+the chain. If you plan on passing the promise on do not use `done()` on it till
+you sure you no longer need it.
+
+    function promiseMe() {
+      return FileLoader.pinkySwear()
+        .then(function(v) { ... });
+      // Do not call done() here
+    }
+
+    var promise = promiseMe()
+      .then(function(v) { ... });
+      // Do not call done() here.
+
+    promise.then(function(v) { ... })
+      .fail(function(v) { ... })
+      .done(); // I'm all done.
+
 #### Progress Notifications
 
 If you are interested in the progress of a download you can attach a callback
@@ -254,7 +283,7 @@ the `notify()` method.
       .progress(function(e) {
         var progress = Math.floor(e.progress * 100);
         Ti.API.info("Progress: " + progress + "%");
-      });
+      }).done();
 
 #### Integrating with other promise libraries
 
