@@ -5,13 +5,13 @@ function urlFromSelection(selection) {
 }
 
 function showError(e) {
-  Ti.API.error(JSON.stringify(e, null, 2));
-  alert(e.message);
+  Ti.API.error("Unable to load media: " + JSON.stringify(e, null, 2));
+  Alloy.Globals.toast(e.message || e);
 }
 
 function callbackImageChange(e) {
   var url = urlFromSelection(e.selectedValue[0]);
-  Ti.API.info("Requested URL: " + url);
+  Ti.API.info("Requested URL via callback: " + url);
   FileLoader.download({
     url:    url,
     onload: function(file) {
@@ -23,13 +23,13 @@ function callbackImageChange(e) {
 
 function promiseImageChange(e) {
   var url = urlFromSelection(e.selectedValue[0]);
-  Ti.API.info("Requested URL: " + url);
+  Ti.API.info("Requested URL via promise: " + url);
   FileLoader.download(url)
     .invoke("getFile")
     .then(function(file) {
       $.promiseImage.image = file;
     })
-    .fail(showError);
+    .fail(showError).done();
 }
 
 var toastTimeout;

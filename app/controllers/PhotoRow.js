@@ -4,7 +4,7 @@ var args = arguments[0] || {};
 var url = "http://photos.tritarget.org/photos/washington2012/" + args.photo;
 
 function updateRow(file) {
-  Ti.API.info("Displaying " + file);
+  // Ti.API.info("Displaying " + file);
   $.photo.image = file.getFile();
   $.info.color = file.downloaded ? "#CF0000" : "#07D100";
   $.info.text = (file.downloaded ? "Downloaded" : "Cached") +
@@ -13,7 +13,7 @@ function updateRow(file) {
 
 function progressDisplay(e) {
   var progress = e.progress;
-  Ti.API.info("Pending progress for " + url + " ~> " + progress);
+  // Ti.API.debug("Pending progress for " + url + " ~> " + progress); // DEBUG
   $.info.color = "#0000CF";
   $.info.text = "Pending: " + Math.floor(progress * 100) + "%";
 }
@@ -28,7 +28,8 @@ if (args.use_promises) {
   FileLoader.download(url)
     .progress(progressDisplay)
     .then(updateRow)
-    .fail(onError);
+    .fail(onError)
+    .done();
 }
 else {
   FileLoader.download({
