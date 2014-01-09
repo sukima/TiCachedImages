@@ -472,7 +472,11 @@ var pinkySwear = FileLoader.pinkySwear = (function() {
       }
     }
 
-    set.done = function() {
+    set.done = function(onFulfilled, onRejected, onProgress) {
+      if (onFulfilled || onRejected || onProgress) {
+        set.then(onFulfilled, onRejected, onProgress).done();
+        return;
+      }
       if (state != null)
         defer(handleUncaughtExceptions);
       else
