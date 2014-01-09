@@ -243,7 +243,7 @@ needed to interact with this library.
       Ti.API.info("File found " + message + ".");
     });
 
-#### dealing with errors
+#### Dealing with errors
 
 If any of the functions executed by the promise callback chain throw an
 exception the subsequent promises in the chain will be rejected. Unfortunatly
