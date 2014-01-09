@@ -440,11 +440,12 @@ var pinkySwear = FileLoader.pinkySwear = (function() {
     };
 
     set.notify = function(value) {
-      defer(function() {
-        if (progress_fns != null)
-          for (var i = 0; i < progress_fns.length; i++)
-            progress_fns[i](value);
-      });
+      if (state == null)
+        defer(function() {
+          if (progress_fns != null)
+            for (var i = 0; i < progress_fns.length; i++)
+              progress_fns[i](value);
+        });
     };
 
     set.resolve = function(value) { set(true,  [value]); };
