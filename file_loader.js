@@ -306,26 +306,38 @@ FileLoader.download = function(args) {
   var url = args.url || args;
   var file = File.fromURL(url);
 
+  function attachCallbacks(promise) {
+    if (args.onload || args.onerror || args.ondatastream) {
+      return promise
+        .then(args.onload, args.onerror, args.ondatastream);
+    }
+    return promise;
+  }
+
   if (pending_tasks[file.id]) {
-    Ti.API.debug("Pending " + url + ": " + file); // DEBUG
-    pending_tasks[file.id].then(args.onload, args.onerror, args.ondatastream);
-    return pending_tasks[file.id];
+    // Ti.API.debug("Pending " + url + ": " + file); // DEBUG
+    return attachCallbacks(pending_tasks[file.id]);
   }
 
   if (file.is_cached && !file.expired()) {
     file.updateLastUsedAt().save();
-    Ti.API.debug("Cached " + url + ": " + file); // DEBUG
+    // Ti.API.debug("Cached " + url + ": " + file); // DEBUG
     waitingForPath = pinkySwear();
-    waitingForPath.then(args.onload, args.onerror, args.ondatastream);
     waitingForPath(true, [file]);
-    return waitingForPath;
+    return attachCallbacks(waitingForPath);
+  }
+
+  if (!Ti.Network.online) {
+    var offlinePromise = pinkySwear();
+    offlinePromise(false, ["Network offline"]);
+    return attachCallbacks(offlinePromise);
   }
 
   var waitingForDownload = requestDispatch()
     .then(function() {
       var waitForHttp = pinkySwear();
       spawnHTTPClient(url, waitForHttp);
-      Ti.API.debug("Downloading " + url + ": " + file); // DEBUG
+      // Ti.API.debug("Downloading " + url + ": " + file); // DEBUG
       return waitForHttp;
     })
     .get("source")
@@ -346,10 +358,9 @@ FileLoader.download = function(args) {
 
   file.pending = true;
   pending_tasks[file.id] = waitingForDownload;
-  waitingForDownload.then(args.onload, args.onerror, args.ondatastream);
   dispatchNextTask();
 
-  return waitingForDownload;
+  return attachCallbacks(waitingForDownload);
 };
 
 // FileLoader.pruneStaleCache - (alias: gc) Remove stale cache files {{{2
