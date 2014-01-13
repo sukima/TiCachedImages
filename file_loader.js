@@ -376,128 +376,202 @@ FileLoader.pruneStaleCache = FileLoader.gc = function(force) {
   }
 };
 
-// Export File class {{{2
-FileLoader.File = File;
+// Promise {{{1
+// Promise is a minimalistic implementation of the Promise/A+ spec and is
+// available at https://github.com/then/promise under the MIT License.
+// This embeded version modified by Devin Weaver.
+//
+// Copyright (c) 2013 Forbes Lindesay
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+function asap(fn) { setTimeout(fn, 0); }
 
-// PinkySwear - Minimalistic implementation of the Promises/A+ spec {{{1
-// Public Domain. Use, modify and distribute it any way you like. No attribution required.
-// NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
-// https://github.com/timjansen/PinkySwear.js
-var pinkySwear = FileLoader.pinkySwear = (function() {
-  /* jshint eqnull:true */
-  function isFunction(f,o) { return typeof f == 'function'; }
-  function defer(callback) { setTimeout(callback, 0); }
+function Promise(fn) {
+  if (!(this instanceof Promise)) return new Promise(fn);
+  if (typeof fn !== 'function') throw new TypeError('not a function');
+  var state = null;
+  var value = null;
+  var progress_fns = null;
+  var deferreds = [];
+  var self = this;
 
-  function pinkySwear() {
-    var state;         // undefined/null = pending, true = fulfilled, false = rejected
-    var values = [];   // an array of values as arguments for the then() handlers
-    var deferred = []; // functions to call when set() is invoked
-    var progress_fns;  // functions to call when notify() is invoked
-
-    var set = function promise(newState, newValues) {
-      if (state == null) {
-        state = newState;
-        values = newValues;
-        defer(function() {
-          for (var i = 0; i < deferred.length; i++)
-            deferred[i]();
-        });
-      }
-    };
-
-    set.then = function(onFulfilled, onRejected, onProgress) {
-      var newPromise = pinkySwear();
-      newPromise.progress = function(v) { set.progress(v); return newPromise; };
-      newPromise.notify   = function(v) { set.notify(v); return newPromise; };
-      var callCallbacks = function() {
-        try {
-          var f = (state ? onFulfilled : onRejected);
-          if (isFunction(f)) {
-            var r = f.apply(null, values);
-            if (r && isFunction(r.then))
-              r.then(
-                function(value){newPromise(true,  [value]);},
-                function(value){newPromise(false, [value]);},
-                function(value){newPromise.notify(value);}
-              );
-            else
-              newPromise(true, [r]);
-          }
-          else
-            newPromise(state, values);
-        }
-        catch (e) {
-          newPromise(false, [e]);
-        }
-      };
-      if (state != null)
-        defer(callCallbacks);
-      else
-        deferred.push(callCallbacks);
-      if (isFunction(onProgress))
-        set.progress(onProgress);
+  this.then = function(onFulfilled, onRejected, onProgress) {
+    var newPromise = new Promise(function(resolve, reject) {
+      handle(new Handler(onFulfilled, onRejected, resolve, reject));
+    });
+    newPromise.progress = function(onProgress) {
+      self.progress(onProgress);
       return newPromise;
     };
+    if (typeof onProgress === 'function') self.progress(onProgress);
+    return newPromise;
+  };
 
-    set.notify = function(value) {
-      if (state == null)
-        defer(function() {
-          if (progress_fns != null)
-            for (var i = 0; i < progress_fns.length; i++)
-              progress_fns[i](value);
-        });
-    };
-
-    set.resolve = function(value) { set(true,  [value]); };
-    set.reject  = function(value) { set(false, [value]); };
-
-    set.progress = function(onProgress) {
-      if (progress_fns == null) { progress_fns = []; }
-      progress_fns.push(onProgress);
-      return set;
-    };
-
-    // always(func) is the same as then(func, func)
-    set.always = function(func) { return set.then(func, func); };
-
-    // fin(func) is like always() but doesn't modify the promise chain
-    set.fin = function(func) { set.then(func, func); return set; };
-
-    // error(func) is the same as then(0, func)
-    set.error = set.fail = function(func) { return set.then(0, func); };
-
-    function handleUncaughtExceptions() {
-      if (state === false) {
-        throw (values.length > 1) ? values : values[0];
-      }
+  function notify(v) {
+    function progressHandler(fn, v) {
+      if (typeof fn === 'function') fn.call(void 0, v);
     }
-
-    set.done = function(onFulfilled, onRejected, onProgress) {
-      if (onFulfilled || onRejected || onProgress) {
-        set.then(onFulfilled, onRejected, onProgress).done();
-        return;
-      }
-      if (state != null)
-        defer(handleUncaughtExceptions);
-      else
-        deferred.push(handleUncaughtExceptions);
-    };
-
-    set.get = function(prop) {
-      return set.then(function(value) { return value[prop]; });
-    };
-
-    set.invoke = function(prop) {
-      var args = [].slice.call(arguments, 1) || [];
-      return set.then(function(value) { return value[prop].apply(value, args); });
-    };
-
-    return set;
+    if (progress_fns === null || state !== null) { return; }
+    for (var i = 0, len = progress_fns.length; i < len; i++)
+      asap(progressHandler(progress_fns[i], v));
   }
 
-  return pinkySwear;
-})();
+  function progress(onProgress) {
+    if (progress_fns === null) { progress_fns = []; }
+    progress_fns.push(onProgress);
+  }
+
+  this.progress = function(onProgress) {
+    progress(onProgress);
+    return this;
+  };
+
+  function handle(deferred) {
+    if (state === null) {
+      deferreds.push(deferred);
+      return;
+    }
+    asap(function() {
+      var cb = state ? deferred.onFulfilled : deferred.onRejected;
+      if (cb === null) {
+        (state ? deferred.resolve : deferred.reject)(value);
+        return;
+      }
+      var ret;
+      try {
+        ret = cb(value);
+      }
+      catch (e) {
+        deferred.reject(e);
+        return;
+      }
+      deferred.resolve(ret);
+    });
+  }
+
+  function resolve(newValue) {
+    try { //Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
+      if (newValue === self) throw new TypeError('A promise cannot be resolved with itself.');
+      if (newValue && (typeof newValue === 'object' || typeof newValue === 'function')) {
+        var then = newValue.then;
+        if (typeof then === 'function') {
+          doResolve(then.bind(newValue), resolve, reject);
+          return;
+        }
+      }
+      state = true;
+      value = newValue;
+      finale();
+    } catch (e) { reject(e); }
+  }
+
+  function reject(newValue) {
+    state = false;
+    value = newValue;
+    finale();
+  }
+
+  function finale() {
+    for (var i = 0, len = deferreds.length; i < len; i++)
+      handle(deferreds[i]);
+    deferreds = null;
+  }
+
+  doResolve(fn, resolve, reject, notify);
+
+  function Handler(onFulfilled, onRejected, resolve, reject){
+    this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
+    this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+    this.resolve = resolve;
+    this.reject = reject;
+  }
+
+  /**
+   * Take a potentially misbehaving resolver function and make sure
+   * onFulfilled and onRejected are only called once.
+   *
+   * Makes no guarantees about asynchrony.
+   */
+  function doResolve(fn, onFulfilled, onRejected, onNotify) {
+    var done = false;
+    try {
+      fn(function (value) {
+        if (done) return;
+        done = true;
+        onFulfilled(value);
+      }, function (reason) {
+        if (done) return;
+        done = true;
+        onRejected(reason);
+      }, function (value) {
+        if (done) return;
+        onNotify(value);
+      });
+    } catch (ex) {
+      if (done) return;
+      done = true;
+      onRejected(ex);
+    }
+  }
+}
+
+Promise.prototype.done = function (onFulfilled, onRejected) {
+  var self = arguments.length ? this.then.apply(this, arguments) : this;
+  self.then(null, function (err) {
+    asap(function () {
+      throw err;
+    });
+  });
+};
+
+Promise.prototype.get = function(prop) {
+  return this.then(function(obj) {
+    return obj[prop];
+  });
+};
+
+Promise.prototype.invoke = function(prop, values) {
+  return this.then(function(obj) {
+    return obj.apply(obj, values);
+  });
+};
+
+Promise.prototype.fin = function(onFinished) {
+  this.done(onFinished, onFinished);
+  return this;
+};
+
+Promise.defer = function() {
+  var resolver, rejecter, notifier;
+  var defer = {};
+
+  defer.promise = new Promise(function(resolve, reject, notify) {
+    defer.resolve = resolve;
+    defer.reject  = reject;
+    defer.notify  = notify;
+  });
+
+  return defer;
+};
 // }}}1
 
-module.exports  = FileLoader;
+FileLoader.File    = File;
+FileLoader.Promise = Promise;
+module.exports     = FileLoader;
 /* vim:set ts=2 sw=2 et fdm=marker: */
