@@ -9,16 +9,20 @@
     }
   ],
   "devDependencies": {
-    "coffee-script": "~> 1.6.3",
-    "jasmine-node": "~> 1.2.0",
-    "proxyquire": "~> 0.4.0",
-    "mockti": "~> 0.1.0",
+    "q": "~1.0.0",
     "titanium": "3.1.2",
     "alloy": "~1.2.2",
-    "express": "~3.4.7"
+    "express": "~3.4.7",
+    "coffee-script": "~> 1.6.3",
+    "mocha": "~1.17.0",
+    "chai": "~1.8.1",
+    "sinon": "~1.7.3",
+    "proxyquire": "~> 0.5.2",
+    "mockti": "~> 1.1.1",
+    "promises-aplus-tests": "~2.0.3"
   },
   "scripts": {
-    "test": "coffee spec/specRunner.coffee",
+    "test": "coffee specRunner.coffee",
     "start": "coffee launcher.coffee"
   },
   "engines": {
