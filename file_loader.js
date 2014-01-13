@@ -7,7 +7,7 @@
 // This is a reinvention of [David Geller's caching code][1]. It will download
 // a file and cache it on the device allowing the cached version to be used
 // instead of spawning repeated HTTP connections. It is based on the Promise/A+
-// specifications and uses a modified version of [pinkySwear][2] to facilitate
+// specifications and uses a modified version of [then/promise][2] to facilitate
 // a promise based API for use in a Titanium project.
 //
 // ## Dependencies
@@ -39,7 +39,7 @@
 // There are several others but these are the few you will need, if that. See more below.
 //
 // ## Promises
-// The `download()` method returns a [pinkySwear][2] promise. You do not have
+// The `download()` method returns a [then/promise][2] promise. You do not have
 // to use promises if you do not want to. However I highly recommend their use.
 // The internals are all managed via promises. If after reading this your still
 // convinced to avoid them you can use callbacks like such:
@@ -68,15 +68,14 @@
 //       .then(function(file) { return file.getFile(); })
 //       .then(function(tiFile) { imageView.image = tiFile; });
 //
-// The modified pinkySwear in this file even offers two convenience methods for
-// the above:
+// The modified [then/promise][2] implementation in this file even offers two
+// convenience methods for the above:
 //
 //     FileLoader.download("http://example.com/image.png")
 //       .invoke("getFile")
 //       .then(function(tiFile) { imageView.image = tiFile; });
 //
-// With the modified pinkySwear promise you have the following methods at your
-// disposal:
+// With the modified Promise you have the following methods at your disposal:
 //
 // - `then(fn)`     - Attach callbacks (fulfilled, rejected, progress). Returns
 //                    a new promise based on the return values / thrown
@@ -109,7 +108,7 @@
 // - `cache_requests` - The number of simultaneous network requests allowed.
 //
 // [1]: http://developer.appcelerator.com/question/125483/how-to-create-a-generic-image-cache-sample-code#answer-218718
-// [2]: https://github.com/timjansen/PinkySwear.js
+// [2]: https://github.com/then/promise
 // [3]: http://promises-aplus.github.io/promises-spec/
 
 // Constants {{{1
@@ -402,6 +401,7 @@ FileLoader.pruneStaleCache = FileLoader.gc = function(force) {
 // THE SOFTWARE.
 function asap(fn) { setTimeout(fn, 0); }
 
+// Promise {{{2
 function Promise(fn) {
   if (!(this instanceof Promise)) return new Promise(fn);
   if (typeof fn !== 'function') throw new TypeError('not a function');
@@ -411,6 +411,7 @@ function Promise(fn) {
   var deferreds = [];
   var self = this;
 
+  // Promise.then {{{3
   this.then = function(onFulfilled, onRejected, onProgress) {
     var newPromise = new Promise(function(resolve, reject) {
       handle(new Handler(onFulfilled, onRejected, resolve, reject));
@@ -423,6 +424,7 @@ function Promise(fn) {
     return newPromise;
   };
 
+  // notify {{{3
   function notify(v) {
     function progressHandler(fn, v) {
       if (typeof fn === 'function') fn.call(void 0, v);
@@ -431,6 +433,7 @@ function Promise(fn) {
       asap(progressHandler(progress_fns[i], v));
   }
 
+  // progress {{{3
   function progress(onProgress) {
     if (progress_fns === null) { progress_fns = []; }
     progress_fns.push(onProgress);
@@ -441,6 +444,7 @@ function Promise(fn) {
     return this;
   };
 
+  // handle {{{3
   function handle(deferred) {
     if (state === null) {
       deferreds.push(deferred);
@@ -464,6 +468,7 @@ function Promise(fn) {
     });
   }
 
+  // resolve {{{3
   function resolve(newValue) {
     try { //Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
       if (newValue === self) throw new TypeError('A promise cannot be resolved with itself.');
@@ -480,20 +485,21 @@ function Promise(fn) {
     } catch (e) { reject(e); }
   }
 
+  // reject {{{3
   function reject(newValue) {
     state = false;
     value = newValue;
     finale();
   }
 
+  // finale {{{3
   function finale() {
     for (var i = 0, len = deferreds.length; i < len; i++)
       handle(deferreds[i]);
     deferreds = null;
   }
 
-  doResolve(fn, resolve, reject, notify);
-
+  // Handler {{{3
   function Handler(onFulfilled, onRejected, resolve, reject){
     this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
     this.onRejected = typeof onRejected === 'function' ? onRejected : null;
@@ -501,6 +507,7 @@ function Promise(fn) {
     this.reject = reject;
   }
 
+  // doResolve {{{3
   /**
    * Take a potentially misbehaving resolver function and make sure
    * onFulfilled and onRejected are only called once.
@@ -528,8 +535,12 @@ function Promise(fn) {
       onRejected(ex);
     }
   }
+  // }}}3
+
+  doResolve(fn, resolve, reject, notify);
 }
 
+// Promise::done {{{2
 Promise.prototype.done = function (onFulfilled, onRejected) {
   var self = arguments.length ? this.then.apply(this, arguments) : this;
   self.then(null, function (err) {
@@ -539,16 +550,19 @@ Promise.prototype.done = function (onFulfilled, onRejected) {
   });
 };
 
+// Promise::fail {{{2
 Promise.prototype.fail = function(fn) {
   return this.then(null, fn);
 };
 
+// Promise::get {{{2
 Promise.prototype.get = function(prop) {
   return this.then(function(obj) {
     return obj[prop];
   });
 };
 
+// Promise::invoke {{{2
 Promise.prototype.invoke = function(prop /*...args*/) {
   var args = Array.prototype.slice.call(arguments, 1);
   return this.then(function(obj) {
@@ -556,11 +570,13 @@ Promise.prototype.invoke = function(prop /*...args*/) {
   });
 };
 
+// Promise::fin {{{2
 Promise.prototype.fin = function(onFinished) {
   this.done(onFinished, onFinished);
   return this;
 };
 
+// Promise.defer {{{2
 Promise.defer = function() {
   var resolver, rejecter, notifier;
   var defer = {};

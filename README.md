@@ -9,11 +9,11 @@ NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
 This is a reinvention of [David Geller's caching code][1]. It will download
 a file and cache it on the device allowing the cached version to be used
 instead of spawning repeated HTTP connections. It is based on the Promise/A+
-specifications and uses a modified version of [pinkySwear][2] to facilitate
+specifications and uses a modified version of [then/promise][2] to facilitate
 a promise based API for use in a Titanium project.
 
 [1]: http://developer.appcelerator.com/question/125483/how-to-create-a-generic-image-cache-sample-code#answer-218718
-[2]: https://github.com/timjansen/PinkySwear.js
+[2]: https://github.com/then/promise
 
 ## Dependencies
 
@@ -165,17 +165,26 @@ file.
 
 The implementation in this repository is exposed for use outside this library.
 The source here is available for modification and so you could copy paste it
-out if interested. To use as is create a new promise with
-`FileLoader.pinkySwear()`. You can fulfill or reject a promise by passing in a
-true false to the promise as if it was a normal function. (See Helpers below
-for better convenience methods).
+out if interested. Two methods of creating a promise are available:
 
-    var promise = FileLoader.pinkySwear();
+    var resolvePromise, rejectPromise, notifyPromise;
+    var promise = new FileLoader.Promise(function (resolve, reject, notify) {
+      resolvePromise = resove;
+      rejectPromise  = reject;
+      notifyPromise  = notify;
+    });
 
-A fair warning that because promises use the return value or thrown exception
-to determine their state it is possible to have exceptions gobbled by the
-promise chain. It is recommended to always end your promises chains with a
-`fail()` to capture any unhanded exceptions.
+    resolvePromise("value"); // resolve the promise.
+
+A more convinent helper is available:
+
+    var defer = FileLoader.Promise.defer();
+    var promise = defer.promise;
+
+    defer.resolve("value"); // resolve the promise.
+
+Promises offer several advantages. Usage is optional in this library. However,
+the library itself uses promises internally.
 
 #### Chaining
 
@@ -196,33 +205,14 @@ opps will be called with the error passed in as the first argument.
 
 #### Helpers
 
-The modified implementation of pinkySwear available in this library offers some
+The modified implementation of  available in this library offers some
 helper methods to aid in convenience.
 
-To fulfill / reject a promise you can call `resolve()` and `reject()`. The
-following are equivalent ways to resolve a pinkySwear:
-
-    var promise = FileLoader.pinkySwear();
-    // fulfill
-    promise.resolve(args...);
-    promise(true, [args...]);
-    // reject
-    promise.reject(args...);
-    promise(false, [args...]);
-
-Sometimes you want something to execute after a promise is resolved regardless
-if it was fulfilled or rejected. In this case we have two helpers.
-
-`always()` will execute regardless of the state of the promise. It returns a
-new promise that you can use to continue the chain. It is important to know
-that the return value will be the value passed into further callbacks after the
-chain. This will also cancel the effect of a rejection if the always function
-returns a value instead of throws an exception.
-
-An alternative helper function called `fin()` does the same thing but does not
-interrupt the promise chain allowing you to execute a callback and the original
-state of the promise is not changed. The return value / exception thrown in the
-`fin()` callback is ignored.
+If you want to execute a function when a promise is resolved or rejected
+regardless (cleanup) use `fin()`. It does not interrupt the promise chain
+allowing you to execute a callback and the original state of the promise is not
+changed. The return value / exception thrown in the `fin()` callback is
+ignored.
 
 Many times you may be interested in a property or result from a method on the
 object that gets passed as the fulfilled value. To add some convenience the
@@ -258,7 +248,7 @@ the chain. If you plan on passing the promise on do not use `done()` on it till
 you sure you no longer need it.
 
     function promiseMe() {
-      return FileLoader.pinkySwear()
+      return FileLoader.download(...)
         .then(function(v) { ... });
       // Do not call done() here
     }
@@ -313,6 +303,27 @@ Have fun.
 
 ## Licensing
 
-Public Domain. Use, modify and distribute it any way you like. No attribution required.
-To the extent possible under law, Tim Jansen has waived all copyright and related or neighboring rights to PinkySwear.
-Please see http://creativecommons.org/publicdomain/zero/1.0/
+Copyright (c) 2013 Devin Weaver
+
+This work is released under the MIT license.
+
+This work includes an embedded and modified version of [then/promise][2] which
+is Copyright (c) 2013 Forbes Lindesay and release under the MIT license.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
