@@ -427,7 +427,6 @@ function Promise(fn) {
     function progressHandler(fn, v) {
       if (typeof fn === 'function') fn.call(void 0, v);
     }
-    if (progress_fns === null || state !== null) { return; }
     for (var i = 0, len = progress_fns.length; i < len; i++)
       asap(progressHandler(progress_fns[i], v));
   }
@@ -540,15 +539,20 @@ Promise.prototype.done = function (onFulfilled, onRejected) {
   });
 };
 
+Promise.prototype.fail = function(fn) {
+  return this.then(null, fn);
+};
+
 Promise.prototype.get = function(prop) {
   return this.then(function(obj) {
     return obj[prop];
   });
 };
 
-Promise.prototype.invoke = function(prop, values) {
+Promise.prototype.invoke = function(prop /*...args*/) {
+  var args = Array.prototype.slice.call(arguments, 1);
   return this.then(function(obj) {
-    return obj.apply(obj, values);
+    return obj[prop].apply(obj, args);
   });
 };
 
