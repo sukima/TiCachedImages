@@ -221,7 +221,6 @@ File.prototype.write = function(data) {
   // check it exists. And assume it worked.
   // (https://jira.appcelerator.org/browse/TIMOB-1658)
   this.getFile().write(data);
-  this.md5 = File.getMD5(data);
   // Ti.API.debug("Wrote " + this.getPath() + " (" + this.md5 + ")"); // DEBUG
   return this.exists();
 };
@@ -290,37 +289,44 @@ File.fromURL = function(url) {
 };
 
 // FileLoader {{{1
-var pending_tasks = {dispatch_queue:[]};
+var pending_tasks;
 var FileLoader = {};
 
 // requestDispatch (private) {{{2
 function requestDispatch() {
-  var waitForDispatch = pinkySwear();
-  pending_tasks.dispatch_queue.push(waitForDispatch);
-  return waitForDispatch;
+  var waitForDispatch = Promise.defer();
+  if (pending_tasks.request_count < MAX_ASYNC_TASKS) {
+    waitForDispatch.resolve();
+  }
+  else {
+    pending_tasks.dispatch_queue.push(waitForDispatch);
+  }
+  pending_tasks.request_count++;
+  return waitForDispatch.promise;
 }
 
 // dispatchNextTask (private) {{{2
 function dispatchNextTask() {
   var task;
-  if (pending_tasks.dispatch_queue.length < MAX_ASYNC_TASKS) {
-    task = pending_tasks.dispatch_queue.shift();
-    if (!task) { return; }
-    if (task.resolve) { task.resolve(); }
-    else { poorMansNextTick(task); }
-  }
+  pending_tasks.request_count--;
+  task = pending_tasks.dispatch_queue.shift();
+  if (!task) { return; }
+  if (task.resolve) { task.resolve(); }
+  else { asap(task); }
 }
 
-// spawnHTTPClient (private) {{{2
-function spawnHTTPClient(url, pinkyPromise) {
+// promisedHTTPClient (private) {{{2
+function promisedHTTPClient(url) {
+  var waitForHttp = Promise.defer();
   var http = Ti.Network.createHTTPClient({
-    onload:       pinkyPromise.resolve,
-    onerror:      pinkyPromise.reject,
-    ondatastream: pinkyPromise.notify,
+    onload:       waitForHttp.resolve,
+    onerror:      waitForHttp.reject,
+    ondatastream: waitForHttp.notify,
     timeout:      HTTP_TIMEOUT
   });
   http.open("GET", url);
   http.send();
+  return waitForHttp.promise;
 }
 
 // FileLoader.download - Attempt to download and cache URL {{{2
@@ -345,31 +351,33 @@ FileLoader.download = function(args) {
   if (file.is_cached && !file.expired()) {
     file.updateLastUsedAt().save();
     // Ti.API.debug("Cached " + url + ": " + file); // DEBUG
-    waitingForPath = pinkySwear();
-    waitingForPath(true, [file]);
-    return attachCallbacks(waitingForPath);
+    waitForPath = Promise.defer();
+    waitForPath.resolve(file);
+    return attachCallbacks(waitForPath.promise);
   }
 
   if (!Ti.Network.online) {
-    var offlinePromise = pinkySwear();
-    offlinePromise(false, ["Network offline"]);
-    return attachCallbacks(offlinePromise);
+    var offlineDefer = Promise.defer();
+    offlineDefer.reject("Network offline");
+    return attachCallbacks(offlineDefer.promise);
   }
 
   var waitingForDownload = requestDispatch()
     .then(function() {
-      var waitForHttp = pinkySwear();
-      spawnHTTPClient(url, waitForHttp);
       // Ti.API.debug("Downloading " + url + ": " + file); // DEBUG
-      return waitForHttp;
+      return promisedHTTPClient(url);
     })
     .get("source")
     .get("responseData")
     .then(function(data) {
-      if (!file.write(data)) {
-        throw new Error("Failed to save data from " + url + ": " + file);
+      var md5sum = File.getMD5(data);
+      if (md5sum !== file.md5) {
+        if (!file.write(data)) {
+          throw new Error("Failed to save data from " + url + ": " + file);
+        }
+        file.downloaded = true;
+        file.md5 = md5sum;
       }
-      file.downloaded = true;
       file.updateLastUsedAt().save();
       return file;
     })
@@ -381,7 +389,6 @@ FileLoader.download = function(args) {
 
   file.pending = true;
   pending_tasks[file.id] = waitingForDownload;
-  dispatchNextTask();
 
   return attachCallbacks(waitingForDownload);
 };
@@ -395,6 +402,14 @@ FileLoader.pruneStaleCache = FileLoader.gc = function(force) {
       file.expunge();
     }
   }
+};
+
+// FileLoader.setupTaskStack - initialize pending_tasks (testing) {{{2
+FileLoader.setupTaskStack = function() {
+  pending_tasks = {
+    request_count:  0,
+    dispatch_queue: []
+  };
 };
 
 // Promise {{{1
@@ -590,6 +605,8 @@ Promise.defer = function() {
   return defer;
 };
 // }}}1
+
+FileLoader.setupTaskStack();
 
 FileLoader.File    = File;
 FileLoader.Promise = Promise;
