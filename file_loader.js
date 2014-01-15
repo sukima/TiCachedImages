@@ -1,5 +1,6 @@
 // FileLoader - A caching file downloader for Titanium
 //
+// Version 1.0.0
 //
 // This is a reinvention of [David Geller's caching code][1]. It will download
 // a file and cache it on the device allowing the cached version to be used

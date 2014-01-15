@@ -1,7 +1,7 @@
 {
   "name": "TiCachedImages",
   "description": "An example of how to cache files in a Titanium application",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "authors": [
     {
       "name": "Devin Weaver",
