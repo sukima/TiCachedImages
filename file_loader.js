@@ -1,14 +1,34 @@
 // FileLoader - A caching file downloader for Titanium
 //
-// Public Domain. Use, modify and distribute it any way you like. No attribution required.
-//
-// NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
 //
 // This is a reinvention of [David Geller's caching code][1]. It will download
 // a file and cache it on the device allowing the cached version to be used
 // instead of spawning repeated HTTP connections. It is based on the Promise/A+
 // specifications and uses a modified version of [then/promise][2] to facilitate
 // a promise based API for use in a Titanium project.
+//
+// FileLoader, Copyright (c) 2013 Devin Weaver
+// [then/promise][2], Copyright (c) 2013 Forbes Lindesay
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+//
+// For the latest version visit: https://github.com/sukima/TiCachedImages
 //
 // ## Dependencies
 // * None
@@ -378,29 +398,13 @@ FileLoader.pruneStaleCache = FileLoader.gc = function(force) {
 };
 
 // Promise {{{1
+//
 // Promise is a minimalistic implementation of the Promise/A+ spec and is
 // available at https://github.com/then/promise under the MIT License.
-// This embeded version modified by Devin Weaver.
-//
 // Copyright (c) 2013 Forbes Lindesay
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// This embeded version modified by Devin Weaver.
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
 function asap(fn) { setTimeout(fn, 0); }
 
 // Promise {{{2
