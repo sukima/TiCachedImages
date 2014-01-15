@@ -413,41 +413,15 @@ function Promise(fn) {
   if (typeof fn !== 'function') throw new TypeError('not a function');
   var state = null;
   var value = null;
-  var progress_fns = null;
   var deferreds = [];
   var self = this;
 
   // Promise.then {{{3
   this.then = function(onFulfilled, onRejected, onProgress) {
-    var newPromise = new Promise(function(resolve, reject) {
-      handle(new Handler(onFulfilled, onRejected, resolve, reject));
+    var newPromise = new Promise(function(resolve, reject, notify) {
+      handle(new Handler(onFulfilled, onRejected, onProgress, resolve, reject, notify));
     });
-    newPromise.progress = function(onProgress) {
-      self.progress(onProgress);
-      return newPromise;
-    };
-    if (typeof onProgress === 'function') self.progress(onProgress);
     return newPromise;
-  };
-
-  // notify {{{3
-  function notify(v) {
-    function progressHandler(fn, v) {
-      if (typeof fn === 'function') fn.call(void 0, v);
-    }
-    for (var i = 0, len = progress_fns.length; i < len; i++)
-      asap(progressHandler(progress_fns[i], v));
-  }
-
-  // progress {{{3
-  function progress(onProgress) {
-    if (progress_fns === null) { progress_fns = []; }
-    progress_fns.push(onProgress);
-  }
-
-  this.progress = function(onProgress) {
-    progress(onProgress);
-    return this;
   };
 
   // handle {{{3
@@ -474,6 +448,19 @@ function Promise(fn) {
     });
   }
 
+  // notify {{{3
+  function notify(value) {
+    var i, len;
+    function progressHandler(fn, v) {
+      if (typeof fn === 'function') fn.call(void 0, v);
+    }
+    if (state !== null) { return; }
+    for (i = 0, len = deferreds.length; i < len; i++) {
+      asap(progressHandler(deferreds[i].onProgress, value));
+      deferreds[i].notify(value);
+    }
+  }
+
   // resolve {{{3
   function resolve(newValue) {
     try { //Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
@@ -481,7 +468,7 @@ function Promise(fn) {
       if (newValue && (typeof newValue === 'object' || typeof newValue === 'function')) {
         var then = newValue.then;
         if (typeof then === 'function') {
-          doResolve(then.bind(newValue), resolve, reject);
+          doResolve(then.bind(newValue), resolve, reject, notify);
           return;
         }
       }
@@ -506,11 +493,13 @@ function Promise(fn) {
   }
 
   // Handler {{{3
-  function Handler(onFulfilled, onRejected, resolve, reject){
+  function Handler(onFulfilled, onRejected, onProgress,  resolve, reject, notify){
     this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
     this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+    this.onProgress = typeof onProgress === 'function' ? onProgress : null;
     this.resolve = resolve;
     this.reject = reject;
+    this.notify = notify;
   }
 
   // doResolve {{{3
@@ -545,6 +534,11 @@ function Promise(fn) {
 
   doResolve(fn, resolve, reject, notify);
 }
+
+// Promise::progress {{{2
+Promise.prototype.progress = function (onProgress) {
+  return this.then(null, null, onProgress);
+};
 
 // Promise::done {{{2
 Promise.prototype.done = function (onFulfilled, onRejected) {
