@@ -372,7 +372,9 @@ FileLoader.download = function(args) {
     .get("responseData")
     .then(function(data) {
       var md5sum = File.getMD5(data);
+      // Ti.API.debug("Processing " + url + ": " + file); // DEBUG
       if (md5sum !== file.md5) {
+        // Ti.API.debug("File contents have changed: " + md5sum + " <=> " + file.md5); // DEBUG
         if (!file.write(data)) {
           throw new Error("Failed to save data from " + url + ": " + file);
         }
@@ -383,6 +385,7 @@ FileLoader.download = function(args) {
       return file;
     })
     .fin(function() {
+      // Ti.API.debug("Finishing: " + file); // DEBUG
       delete pending_tasks[file.id];
       file.pending = false;
       dispatchNextTask();
@@ -421,15 +424,6 @@ FileLoader.setupTaskStack = function() {
 //
 // This embeded version modified by Devin Weaver.
 //
-function asap(fn) { setTimeout(fn, 0); }
-
-// Titanium does not have a Function.prototype.bind method. We need to polyfill.
-function polyBind(fn, ctx) {
-  return function() {
-    return fn.apply(ctx, Array.prototype.slice.call(arguments));
-  };
-}
-
 // Promise {{{2
 function Promise(fn) {
   if (!(this instanceof Promise)) return new Promise(fn);
@@ -440,14 +434,13 @@ function Promise(fn) {
   var self = this;
 
   // Promise.then {{{3
-  this.then = function(onFulfilled, onRejected, onProgress) {
-    var newPromise = new Promise(function(resolve, reject, notify) {
-      handle(new Handler(onFulfilled, onRejected, onProgress, resolve, reject, notify));
+  this.then = function(onFulfilled, onRejected) {
+    return new Promise(function(resolve, reject) {
+      handle(new Handler(onFulfilled, onRejected, resolve, reject));
     });
-    return newPromise;
   };
 
-  // handle {{{3
+  // handle (private) {{{3
   function handle(deferred) {
     if (state === null) {
       deferreds.push(deferred);
@@ -471,27 +464,14 @@ function Promise(fn) {
     });
   }
 
-  // notify {{{3
-  function notify(value) {
-    var i, len;
-    function progressHandler(fn, v) {
-      if (typeof fn === 'function') fn.call(void 0, v);
-    }
-    if (state !== null) { return; }
-    for (i = 0, len = deferreds.length; i < len; i++) {
-      asap(progressHandler(deferreds[i].onProgress, value));
-      deferreds[i].notify(value);
-    }
-  }
-
-  // resolve {{{3
+  // resolve (private) {{{3
   function resolve(newValue) {
     try { //Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
       if (newValue === self) throw new TypeError('A promise cannot be resolved with itself.');
       if (newValue && (typeof newValue === 'object' || typeof newValue === 'function')) {
         var then = newValue.then;
         if (typeof then === 'function') {
-          doResolve(polyBind(then, newValue), resolve, reject, notify);
+          doResolve(polyBind(then, newValue), resolve, reject);
           return;
         }
       }
@@ -501,66 +481,76 @@ function Promise(fn) {
     } catch (e) { reject(e); }
   }
 
-  // reject {{{3
+  // reject (private) {{{3
   function reject(newValue) {
     state = false;
     value = newValue;
     finale();
   }
 
-  // finale {{{3
+  // finale (private) {{{3
   function finale() {
     for (var i = 0, len = deferreds.length; i < len; i++)
       handle(deferreds[i]);
     deferreds = null;
   }
-
-  // Handler {{{3
-  function Handler(onFulfilled, onRejected, onProgress,  resolve, reject, notify){
-    this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
-    this.onRejected = typeof onRejected === 'function' ? onRejected : null;
-    this.onProgress = typeof onProgress === 'function' ? onProgress : null;
-    this.resolve = resolve;
-    this.reject = reject;
-    this.notify = notify;
-  }
-
-  // doResolve {{{3
-  /**
-   * Take a potentially misbehaving resolver function and make sure
-   * onFulfilled and onRejected are only called once.
-   *
-   * Makes no guarantees about asynchrony.
-   */
-  function doResolve(fn, onFulfilled, onRejected, onNotify) {
-    var done = false;
-    try {
-      fn(function (value) {
-        if (done) return;
-        done = true;
-        onFulfilled(value);
-      }, function (reason) {
-        if (done) return;
-        done = true;
-        onRejected(reason);
-      }, function (value) {
-        if (done) return;
-        onNotify(value);
-      });
-    } catch (ex) {
-      if (done) return;
-      done = true;
-      onRejected(ex);
-    }
-  }
   // }}}3
 
-  doResolve(fn, resolve, reject, notify);
+  doResolve(fn, resolve, reject);
+}
+
+// Promise helper functions {{{2
+// Handler {{{3
+function Handler(onFulfilled, onRejected, resolve, reject){
+  this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
+  this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+  this.resolve = resolve;
+  this.reject = reject;
+}
+
+// doResolve {{{3
+/**
+ * Take a potentially misbehaving resolver function and make sure
+ * onFulfilled and onRejected are only called once.
+ *
+ * Makes no guarantees about asynchrony.
+ */
+function doResolve(fn, onFulfilled, onRejected) {
+  var done = false;
+  try {
+    fn(function (value) {
+      if (done) return;
+      done = true;
+      onFulfilled(value);
+    }, function (reason) {
+      if (done) return;
+      done = true;
+      onRejected(reason);
+    });
+  } catch (ex) {
+    if (done) return;
+    done = true;
+    onRejected(ex);
+  }
+}
+
+// asap {{{3
+function asap(fn) {
+  setTimeout(fn, 0);
+}
+
+// polyBind {{{3
+// Titanium does not have a Function.prototype.bind method. We need to polyfill.
+function polyBind(fn, ctx) {
+  return function() {
+    return fn.apply(ctx, Array.prototype.slice.call(arguments));
+  };
 }
 
 // Promise::progress {{{2
 Promise.prototype.progress = function (onProgress) {
-  return this.then(null, null, onProgress);
+  // XXX: This is unimplemented
+  return this;
 };
 
 // Promise::done {{{2
@@ -607,7 +597,7 @@ Promise.defer = function() {
   defer.promise = new Promise(function(resolve, reject, notify) {
     defer.resolve = resolve;
     defer.reject  = reject;
-    defer.notify  = notify;
+    defer.notify  = function(){}; // XXX: This is unimplemented
   });
 
   return defer;

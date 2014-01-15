@@ -37,7 +37,7 @@ describe("Promise Extentions", function(){
     });
   });
 
-  describe("#progress / #notify", function() {
+  describe.skip("#progress / #notify", function() {
     it("calls the onProgress function", function(done) {
       this.defer.promise.progress(function(v) {
         check(done, function() {

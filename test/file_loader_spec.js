@@ -133,7 +133,7 @@ describe("FileLoader#download", function() {
     }, 10);
   });
 
-  it("notifies promise while recieving network data", function(done) {
+  it.skip("notifies promise while recieving network data", function(done) {
     var test = this;
     FileLoader.setupTaskStack(); // Force a fresh queue for testing
     FileLoader.download("a").progress(function(value) {
