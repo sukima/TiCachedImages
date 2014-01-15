@@ -147,10 +147,10 @@ via a periodic interval (android).
 
 ## Configuration
 
-The following configuration variables can be used. If your using Alloy add them
-to your Alloy.CFG namespace by placing them in your `app/config.json` file. If
-your not using Alloy you can set the variables as globals in your `app.js`
-file.
+To set configuration when using Alloy set them in your `app/config.json`
+Otherwise if Alloy is not used set them in `app.js` on `Ti.App`.
+
+You can adjust the following variables:
 
 - `caching_property_key` - The `Ti.App.Property` key to use for storing the
                            cache metadata.

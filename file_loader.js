@@ -95,8 +95,10 @@
 //
 // ## Configuration
 //
-// You can adjust the following variables either defined globals or in your
-// `Alloy.CFG` namespace (Before your first `require()`):
+// To set configuration when using Alloy set them in your `app/config.json`
+// Otherwise if Alloy is not used set them in `app.js` on `Ti.App`.
+//
+// You can adjust the following variables:
 //
 // - `cache_property_key` - The `Ti.App.Property` key to use for storing the
 //                            cache metadata.
@@ -113,7 +115,7 @@
 
 // Constants {{{1
 // Load constants allowing them to be overwritten with configuration.
-var HTTP_TIMEOUT    = 10000;
+var HTTP_TIMEOUT = 10000;
 var CACHE_METADATA_PROPERTY, EXPIRATION_TIME, CACHE_PATH_PREFIX, MAX_ASYNC_TASKS;
 (function(global) {
   var have_alloy = (typeof Alloy !== 'undefined' && Alloy !== null && Alloy.CFG);
@@ -133,7 +135,7 @@ var CACHE_METADATA_PROPERTY, EXPIRATION_TIME, CACHE_PATH_PREFIX, MAX_ASYNC_TASKS
   EXPIRATION_TIME         = loadConfig("cache_expiration")   || 3600000; // 60 minutes
   MAX_ASYNC_TASKS         = loadConfig("cache_requests")     || 10;
 
-})(this);
+})(Ti.App);
 
 // Metadata {{{1
 var metadata = Ti.App.Properties.getObject(CACHE_METADATA_PROPERTY) || {};
