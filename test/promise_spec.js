@@ -2,9 +2,10 @@
 // Includes tests for custom features.
 /* jshint expr:true */
 require("./support/titanium");
+var check              = require("./support/asyncCheck");
 var expect             = require("chai").expect;
 var promisesAplusTests = require("promises-aplus-tests").mocha;
-var FileLoader         = require("file_loader");
+var Promise            = require("file_loader").Promise;
 
 function getAdapter(Promise) {
   return {
@@ -13,11 +14,11 @@ function getAdapter(Promise) {
 }
 
 describe("Promises/A+ Tests", function () {
-  promisesAplusTests(getAdapter(FileLoader.Promise));
+  promisesAplusTests(getAdapter(Promise));
 });
 
 describe("Promise Extentions", function(){
-  var adapter = getAdapter(FileLoader.Promise);
+  var adapter = getAdapter(Promise);
   this.timeout(200);
 
   beforeEach(function() {
@@ -28,8 +29,9 @@ describe("Promise Extentions", function(){
     it("calls the fail callback when promise is rejected", function(done) {
       this.defer.promise
         .fail(function(reason) {
-          expect( reason ).to.equal("testing fail callback");
-          done();
+          check(done, function() {
+            expect( reason ).to.equal("testing fail callback");
+          });
         }).done();
       this.defer.reject("testing fail callback");
     });
@@ -38,8 +40,9 @@ describe("Promise Extentions", function(){
   describe("#progress / #notify", function() {
     it("calls the onProgress function", function(done) {
       this.defer.promise.progress(function(v) {
-        expect( v ).to.equal("test");
-        done();
+        check(done, function() {
+          expect( v ).to.equal("test");
+        });
       });
       this.defer.notify("test");
     });
@@ -50,22 +53,23 @@ describe("Promise Extentions", function(){
         .then(onFullfilled)
         .then(onFullfilled)
         .progress(function(v) {
-          expect( v ).to.equal("test");
-          done();
+          check(done, function() {
+            expect( v ).to.equal("test");
+          });
         }).done();
       this.defer.notify("test");
     });
 
     it("accepts onProgress via then() function", function(done) {
       this.defer.promise.then(null, null, function(v) {
-        expect( v ).to.equal("test");
-        done();
+        check(done, function() {
+          expect( v ).to.equal("test");
+        });
       });
       this.defer.notify("test");
     });
 
     it("does a noop if promise is fulfilled/rejected", function(done) {
-      var called = false;
       this.defer.resolve("test");
       this.defer.promise.progress(function(v) {
         done(new Error("expected progress callback to not have been called"));
@@ -81,8 +85,9 @@ describe("Promise Extentions", function(){
       this.defer.promise
         .get("test_prop")
         .then(function(value) {
-          expect( value ).to.equal("test prop value");
-          done();
+          check(done, function() {
+            expect( value ).to.equal("test prop value");
+          });
         }).done();
     });
 
@@ -92,8 +97,9 @@ describe("Promise Extentions", function(){
       this.defer.promise
         .get("test_prop")
         .then(null, function(reason) {
-          expect(reason).to.equal(exception);
-          done();
+          check(done, function() {
+            expect(reason).to.equal(exception);
+          });
         }).done();
     });
   });
@@ -108,8 +114,9 @@ describe("Promise Extentions", function(){
       this.defer.promise
         .invoke("foo", "test value")
         .then(function (value) {
-          expect( value ).to.equal("foo test value");
-          done();
+          check(done, function() {
+            expect( value ).to.equal("foo test value");
+          });
         }).done();
       this.defer.resolve(v);
     });
@@ -119,8 +126,9 @@ describe("Promise Extentions", function(){
       this.defer.promise
         .invoke("foo", "test value")
         .then(null, function (reason) {
-          expect( reason ).to.be.an.instanceof(Error);
-          done();
+          check(done, function() {
+            expect( reason ).to.be.an.instanceof(Error);
+          });
         }).done();
       this.defer.resolve(v);
     });
