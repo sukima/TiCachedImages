@@ -77,6 +77,29 @@ describe("Promise Extentions", function(){
       this.defer.notify("test");
       setTimeout(done, 180);
     });
+
+    it("does nothing if no progress callbacks have been defined", function(done) {
+      try { this.defer.notify("test"); }
+      catch (e) { done(e); }
+      setTimeout(done, 10);
+    });
+
+    it("propagates notifications from a returned promise", function(done) {
+      var defer2 = adapter.deferred();
+      var promise2 = this.defer.promise.then(function() {
+        return defer2.promise;
+      });
+
+      this.defer.resolve();
+
+      promise2.progress(function(v) {
+        check(done, function() {
+          expect( v ).to.equal("test");
+        });
+      }).done();
+
+      setTimeout(function() { defer2.notify("test"); }, 10);
+    });
   });
 
   describe("#get", function() {
