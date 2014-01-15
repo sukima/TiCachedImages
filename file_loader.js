@@ -423,6 +423,13 @@ FileLoader.setupTaskStack = function() {
 //
 function asap(fn) { setTimeout(fn, 0); }
 
+// Titanium does not have a Function.prototype.bind method. We need to polyfill.
+function polyBind(fn, ctx) {
+  return function() {
+    return fn.apply(ctx, Array.prototype.slice.call(arguments));
+  };
+}
+
 // Promise {{{2
 function Promise(fn) {
   if (!(this instanceof Promise)) return new Promise(fn);
@@ -484,7 +491,7 @@ function Promise(fn) {
       if (newValue && (typeof newValue === 'object' || typeof newValue === 'function')) {
         var then = newValue.then;
         if (typeof then === 'function') {
-          doResolve(then.bind(newValue), resolve, reject, notify);
+          doResolve(polyBind(then, newValue), resolve, reject, notify);
           return;
         }
       }
