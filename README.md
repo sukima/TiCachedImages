@@ -1,3 +1,5 @@
+![](https://travis-ci.org/sukima/TiCachedImages.png)
+
 # FileLoader
 
 A caching file downloader for Titanium
