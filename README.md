@@ -74,6 +74,18 @@ want to use the FileLoader object require it.
 
 [3]: https://raw.github.com/sukima/TiCachedImages/master/file_loader.js
 
+## Testing
+
+Uses Mocha for testing. It will test against the Promise/A+ test suite.
+
+    $ npm install
+    $ npm test
+
+Or you can pass mocha specific arguments through the `specRunner.coffee`
+script.
+
+    $ coffee specRunner --reporter nyan
+
 ## Usage
 
 The basic usage is one simple function called `download()` this takes a URL and
