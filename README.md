@@ -21,7 +21,19 @@ a promise based API for use in a Titanium project.
 
 ## Dependencies
 
-* None
+- None
+
+## Features
+
+- Downloads files via Titanium's HTTPClient interface
+- Store files on device as a cache
+- Auto expire files based on time and re-download
+- Offers a way to Garbage Collect stale cache files
+- Prevent file I/O if remote file has not changed
+- Auto throttle requests to prevent too many HTTP connections (good for
+  TableViews with images)
+- Uses a Promise/A+ compatible API
+- Embeds a micro Promise/A+ implementation (No external promise dependencies)
 
 ## Rational
 
