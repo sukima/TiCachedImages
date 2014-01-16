@@ -1,4 +1,4 @@
-![](https://travis-ci.org/sukima/TiCachedImages.png)
+[![Build Status](https://travis-ci.org/sukima/TiCachedImages.png?branch=master)](https://travis-ci.org/sukima/TiCachedImages)
 
 # FileLoader
 
