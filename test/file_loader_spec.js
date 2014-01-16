@@ -6,6 +6,7 @@ var expect     = require("chai").expect;
 var FileLoader = require("file_loader");
 
 describe("FileLoader#download", function() {
+  var sandbox = sinon.sandbox.create();
   var FakeHTTPClient = {
     open: function() { },
     send: function() { }
@@ -13,19 +14,19 @@ describe("FileLoader#download", function() {
   this.timeout(200);
 
   beforeEach(function() {
-    this.sandbox          = sinon.sandbox.create();
-    this.fileWriteStub    = this.sandbox.stub(FileLoader.File.prototype, "write").returns(true);
-    this.fileExistsStub   = this.sandbox.stub(FileLoader.File.prototype, "exists");
-    this.fileExpiredStub  = this.sandbox.stub(FileLoader.File.prototype, "expired");
-    this.httpClientMock   = this.sandbox.mock(FakeHTTPClient);
-    this.createClientStub = this.sandbox.stub(Ti.Network, "createHTTPClient")
+    this.fileWriteStub    = sandbox.stub(FileLoader.File.prototype, "write").returns(true);
+    this.fileExistsStub   = sandbox.stub(FileLoader.File.prototype, "exists");
+    this.fileExpiredStub  = sandbox.stub(FileLoader.File.prototype, "expired");
+    this.httpClientMock   = sandbox.mock(FakeHTTPClient);
+    this.createClientStub = sandbox.stub(Ti.Network, "createHTTPClient")
       .returns(FakeHTTPClient);
     Ti.Network.online = true;
+    FileLoader.setupTaskStack(); // Force a fresh queue for testing
   });
 
   afterEach(function() {
     this.httpClientMock.verify();
-    this.sandbox.restore();
+    sandbox.restore();
     Ti.Network.online = true;
   });
 
@@ -36,7 +37,7 @@ describe("FileLoader#download", function() {
       .fail(function(reason) {
         check(done, function() {
           expect( test.createClientStub.called ).to.be.false;
-          expect( reason ).to.match(/offline/g);
+          expect( reason ).to.match(/offline/i);
         });
       }).done();
   });
@@ -117,8 +118,6 @@ describe("FileLoader#download", function() {
 
   it("queues requests with a throttle limit", function(done) {
     var test = this;
-    // Max concurrent downloads defined in support/titanium.js
-    FileLoader.setupTaskStack(); // Force a fresh queue for testing
 
     FileLoader.download("a");
     FileLoader.download("b");
@@ -133,9 +132,9 @@ describe("FileLoader#download", function() {
     }, 10);
   });
 
+  // FIXME: This feature has been removed and needs to be reinvented.
   it.skip("notifies promise while recieving network data", function(done) {
     var test = this;
-    FileLoader.setupTaskStack(); // Force a fresh queue for testing
     FileLoader.download("a").progress(function(value) {
       check(done, function() {
         expect( value ).to.have.property("progress", 0.9);
