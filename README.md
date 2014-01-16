@@ -15,6 +15,8 @@ a promise based API for use in a Titanium project.
 [1]: http://developer.appcelerator.com/question/125483/how-to-create-a-generic-image-cache-sample-code#answer-218718
 [2]: https://github.com/then/promise
 
+**Progress notifictions have been disabled in this release**
+
 ## Dependencies
 
 * None
