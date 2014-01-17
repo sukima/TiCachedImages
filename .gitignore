@@ -6,3 +6,4 @@ tmp
 Resources/
 node_modules/
 plugins/**/*.pyc
+dev_server/assets/downloads/

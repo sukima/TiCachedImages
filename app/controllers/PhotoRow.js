@@ -1,7 +1,7 @@
 var FileLoader = require("file_loader");
 
 var args = arguments[0] || {};
-var url = "http://photos.tritarget.org/photos/washington2012/" + args.photo;
+var url = Alloy.CFG.server + "downloads/" + args.photo;
 
 function updateRow(file) {
   // Ti.API.info("Displaying " + file);

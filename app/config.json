@@ -5,7 +5,11 @@
   },
   "env:test": {},
   "env:production": {},
-  "os:ios": {},
-  "os:android": {},
+  "os:ios": {
+    "server": "http://localhost:3000/"
+  },
+  "os:android": {
+    "server": "http://<local-ip-address>:3000/"
+  },
   "dependencies": {}
 }
