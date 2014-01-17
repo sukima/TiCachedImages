@@ -12,7 +12,8 @@
   width:        300,
   height:       "240dp",
   borderWidth:  "2dp",
-  borderRadias: "6dp"
+  borderRadias: "6dp",
+  image:        "/image_placeholder.png"
 },
 
 "#callbackTab": {

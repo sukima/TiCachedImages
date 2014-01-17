@@ -5,7 +5,8 @@
 "#photo": {
   top:    10,
   left:   10,
-  bottom: 10
+  bottom: 10,
+  image:  "/image_placeholder.png"
 },
 
 "#photo[platform=ios]": {
