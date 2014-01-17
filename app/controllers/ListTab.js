@@ -1,5 +1,6 @@
-var FileLoader = require("file_loader");
-var use_promises = true;
+var FileLoader      = require("file_loader");
+var use_promises    = true;
+var use_file_loader = true;
 
 var photos = [
   "IMG_7651_t.png",
@@ -23,7 +24,11 @@ var photos = [
 
 function refreshTableData() {
   function makeRowFor(photo) {
-    return Alloy.createController("PhotoRow", {photo: photo, use_promises: use_promises}).getView();
+    return Alloy.createController("PhotoRow", {
+      photo:           photo,
+      use_promises:    use_promises,
+      use_file_loader: use_file_loader
+    }).getView();
   }
 
   var photo_index = 0, i, row, rows = [];
@@ -39,8 +44,9 @@ function refreshTableData() {
 function promptForSettigns() {
   var choice = Ti.UI.createOptionDialog({
     title:   "API Interface",
-    cancel:  2,
+    cancel:  3,
     options: [
+      (use_file_loader ? "Disable FileLoader" : "Enable FileLoader"),
       "Use Promises" + (use_promises ? " *" : ""),
       "Use Callbacks" + (use_promises ? "" : " *"),
       "Cancel"
@@ -49,10 +55,14 @@ function promptForSettigns() {
   choice.addEventListener("click", function(e) {
     switch (e.index) {
       case 0:
+        use_file_loader = !use_file_loader;
+        Alloy.Globals.toast("FileLoader " + (use_file_loader ? "enabled" : "disabled"));
+        break;
+      case 1:
         use_promises = true;
         Alloy.Globals.toast("Using Promises");
         break;
-      case 1:
+      case 2:
         use_promises = false;
         Alloy.Globals.toast("Using Callbacks");
         break;

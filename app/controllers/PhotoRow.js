@@ -24,7 +24,12 @@ function onError(error) {
   // We don't want to throw an error here. It would be lost.
 }
 
-if (args.use_promises) {
+if (!args.use_file_loader) {
+  $.photo.image = url;
+  $.info.color  = "#CF0000";
+  $.info.text   = "Caching disabled";
+}
+else if (args.use_promises) {
   FileLoader.download(url)
     .progress(progressDisplay)
     .then(updateRow)
