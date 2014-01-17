@@ -357,7 +357,7 @@ FileLoader.download = function(args) {
     return attachCallbacks(waitForPath.promise);
   }
 
-  if (!Ti.Network.online) {
+  if (!Ti.Network.online && args.offlineCheck !== false) {
     var offlineDefer = Promise.defer();
     offlineDefer.reject("Network offline");
     return attachCallbacks(offlineDefer.promise);
