@@ -349,7 +349,7 @@ FileLoader.download = function(args) {
     return attachCallbacks(pending_tasks[file.id]);
   }
 
-  if (file.is_cached && !file.expired()) {
+  if (!args.force && file.is_cached && !file.expired()) {
     file.updateLastUsedAt().save();
     // Ti.API.debug("Cached " + url + ": " + file); // DEBUG
     waitForPath = Promise.defer();
@@ -373,7 +373,7 @@ FileLoader.download = function(args) {
     .then(function(data) {
       var md5sum = File.getMD5(data);
       // Ti.API.debug("Processing " + url + ": " + file); // DEBUG
-      if (md5sum !== file.md5) {
+      if (args.force || md5sum !== file.md5) {
         // Ti.API.debug("File contents have changed: " + md5sum + " <=> " + file.md5); // DEBUG
         if (!file.write(data)) {
           throw new Error("Failed to save data from " + url + ": " + file);
