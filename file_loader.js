@@ -331,9 +331,9 @@ function promisedHTTPClient(url) {
 }
 
 // FileLoader.download - Attempt to download and cache URL {{{2
-FileLoader.download = function(args) {
+FileLoader.download = function(url, args) {
   var waitingForPath;
-  var url = args.url || args;
+  args = args || {};
   var file = File.fromURL(url);
 
   function attachCallbacks(promise) {
