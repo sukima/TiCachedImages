@@ -122,7 +122,9 @@ titaniumArgs.push "--log-level", "debug" if options.verbose
 titaniumArgs.push options.extraArgs...
 
 unless options.install or options.android
-  server = require("./dev_server/server")
+  require("./dev_server/server").promise
+    .then (express_server) -> server = express_server
+    .done()
 
 unless options.server_only
   waitingForTitanium = promisedSpawn titanium, titaniumArgs...
