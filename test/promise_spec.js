@@ -3,7 +3,9 @@
 /* jshint expr:true */
 require("./support/titanium");
 var check              = require("./support/asyncCheck");
-var expect             = require("chai").expect;
+var chai               = require("chai");
+var expect             = chai.expect;
+var AssertionError     = chai.AssertionError;
 var promisesAplusTests = require("promises-aplus-tests").mocha;
 var Promise            = require("file_loader").Promise;
 
@@ -158,22 +160,42 @@ describe("Promise Extentions", function(){
   });
 
   describe("#fin", function() {
-    it("calls function on resolved", function(done) {
-      function callback() { done(); }
-      this.defer.promise.fin(callback);
+    it("calls function on resolved and keeps current state", function(done) {
+      var called = false;
+      function callback() { called = true; }
+      this.defer.promise.fin(callback).then(function() {
+        check(done, function() {
+          expect( called ).to.be.true;
+        });
+      }, function() {
+        done(new AssertionError("expected promise to be fulfilled"));
+      });
       this.defer.resolve("foo");
     });
 
-    it("calls function on rejected", function(done) {
-      function callback() { done(); }
-      this.defer.promise.fin(callback);
+    it("calls function on rejected and keeps current state", function(done) {
+      var called = false;
+      function callback() { called = true; }
+      this.defer.promise.fin(callback).then(function() {
+        done(new AssertionError("expected promise to be rejected"));
+      }, function() {
+        check(done, function() {
+          expect( called ).to.be.true;
+        });
+      });
       this.defer.reject("bar");
     });
 
-    it("returns the same promise", function() {
-      function callback() { }
-      var promise = this.defer.promise.fin(callback);
-      expect( promise ).to.equal(this.defer.promise);
+    it("ignores the callback's return value", function(done) {
+      function callback() {
+        return "barfoo";
+      }
+      this.defer.promise.fin(callback).then(function(x) {
+        check(done, function() {
+          expect( x ).to.equal("foobar");
+        });
+      }).done();
+      this.defer.resolve("foobar");
     });
   });
 });

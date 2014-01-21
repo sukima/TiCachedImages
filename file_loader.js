@@ -585,8 +585,13 @@ Promise.prototype.invoke = function(prop /*...args*/) {
 
 // Promise::fin {{{2
 Promise.prototype.fin = function(onFinished) {
-  this.done(onFinished, onFinished);
-  return this;
+  return this.then(function(x) {
+    onFinished(x);
+    return x;
+  }, function(x) {
+    onFinished(x);
+    throw x;
+  });
 };
 
 // Promise.defer {{{2
