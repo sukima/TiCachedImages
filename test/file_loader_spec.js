@@ -14,12 +14,20 @@ describe("FileLoader#download", function() {
   this.timeout(200);
 
   beforeEach(function() {
+    this.test_data = "test data";
+    this.response = {
+      status:       200,
+      responseData: this.test_data
+    };
+    this.url = "http://example.com/test_file.png";
+
     this.fileWriteStub    = sandbox.stub(FileLoader.File.prototype, "write").returns(true);
     this.fileExistsStub   = sandbox.stub(FileLoader.File.prototype, "exists");
     this.fileExpiredStub  = sandbox.stub(FileLoader.File.prototype, "expired");
     this.httpClientMock   = sandbox.mock(FakeHTTPClient);
     this.createClientStub = sandbox.stub(Ti.Network, "createHTTPClient")
       .returns(FakeHTTPClient);
+
     Ti.Network.online = true;
     FileLoader.setupTaskStack(); // Force a fresh queue for testing
   });
@@ -64,12 +72,7 @@ describe("FileLoader#download", function() {
   });
 
   describe("with cached files", function() {
-
     beforeEach(function() {
-      this.test_data = "test data";
-      this.response = { responseData: this.test_data };
-      this.url = "http://example.com/test_file.png";
-
       var test_file = FileLoader.File.fromURL(this.url);
       test_file.md5 = Ti.Utils.md5HexDigest(this.test_data);
       test_file.save();
@@ -145,6 +148,16 @@ describe("FileLoader#download", function() {
       var ondatastream = test.createClientStub.getCall(0).args[0].ondatastream;
       ondatastream({progress: 0.9});
     }, 10);
+  });
+
+  it("handles HTTPClient options", function(done) {
+    var _this = this;
+    this.createClientStub.yieldsToAsync("onload", {source: this.response});
+    FileLoader.download("x", { username: "bob" }).then(function() {
+      check(done, function() {
+        sinon.assert.calledWith(_this.createClientStub, sinon.match.has("username", "bob"));
+      });
+    }).done();
   });
 
 });

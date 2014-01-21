@@ -293,6 +293,14 @@ File.fromURL = function(url) {
 var pending_tasks;
 var FileLoader = {};
 
+// extendObj {{{2
+function extendObj(newObj, otherObj) {
+  for (var name in otherObj)
+    if (otherObj.hasOwnProperty(name))
+      newObj[name] = otherObj[name];
+  return newObj;
+}
+
 // requestDispatch (private) {{{2
 function requestDispatch() {
   var waitForDispatch = Promise.defer();
@@ -317,14 +325,16 @@ function dispatchNextTask() {
 }
 
 // promisedHTTPClient (private) {{{2
-function promisedHTTPClient(url) {
+function promisedHTTPClient(url, options) {
   var waitForHttp = Promise.defer();
-  var http = Ti.Network.createHTTPClient({
+  var httpClientOptions = { timeout: HTTP_TIMEOUT };
+  extendObj(httpClientOptions, options);
+  extendObj(httpClientOptions, {
     onload:       waitForHttp.resolve,
     onerror:      waitForHttp.reject,
-    ondatastream: waitForHttp.notify,
-    timeout:      HTTP_TIMEOUT
+    ondatastream: waitForHttp.notify
   });
+  var http = Ti.Network.createHTTPClient(httpClientOptions);
   http.open("GET", url);
   http.send();
   return waitForHttp.promise;
@@ -366,7 +376,7 @@ FileLoader.download = function(url, args) {
   var waitingForDownload = requestDispatch()
     .then(function() {
       // Ti.API.debug("Downloading " + url + ": " + file); // DEBUG
-      return promisedHTTPClient(url);
+      return promisedHTTPClient(url, args);
     })
     .get("source")
     .get("responseData")
