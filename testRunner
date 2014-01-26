@@ -1,3 +1,5 @@
+#!/usr/bin/env coffee
+
 Q                       = require("q")
 {existsSync:exists}     = require("fs")
 {resolve,join:joinPath} = require("path")

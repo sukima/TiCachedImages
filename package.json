@@ -22,7 +22,7 @@
     "promises-aplus-tests": "~2.0.3"
   },
   "scripts": {
-    "test": "coffee specRunner.coffee",
+    "test": "coffee testRunner",
     "start": "coffee launcher.coffee"
   },
   "engines": {
