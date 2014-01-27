@@ -185,4 +185,31 @@ describe("FileLoader#download", function() {
     fakeOnLoad(this.url, this.response);
   });
 
+  describe("Redirects", function() {
+    beforeEach(function() {
+      // Use a getter to adjust the status code based on number of times accessed.
+      // This is to simulate a server that would first offer a redirect code
+      // and on the next URL offer a 200.
+      this.response = {
+        _statusCount:    0,
+        _redirectHops:   1,
+        _redirectStatus: 302,
+        responseData:    "test_data",
+        location:        "test_location",
+        get status() {
+          return ((++this._statusCount) <= this._redirectHops) ? this._redirectStatus : 200;
+        }
+      };
+    });
+
+    it("does not use the built-in autoRedirect", function(done) {
+      var test = this;
+      FileLoader.download("a").done();
+      setTimeout(function() {
+        check(done, function() {
+          sinon.assert.calledWith(test.createClientSpy, sinon.match.has("autoRedirect", false));
+        });
+      }, fakeTimeout);
+    });
+  });
 });

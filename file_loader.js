@@ -332,7 +332,8 @@ function promisedHTTPClient(url, options) {
   extendObj(httpClientOptions, {
     onload:       waitForHttp.resolve,
     onerror:      waitForHttp.reject,
-    ondatastream: waitForHttp.notify
+    ondatastream: waitForHttp.notify,
+    autoRedirect: false
   });
   var http = Ti.Network.createHTTPClient(httpClientOptions);
   http.open("GET", url);
