@@ -1,17 +1,44 @@
 /* jshint expr:true */
 require("./support/titanium");
-var check      = require("./support/asyncCheck");
-var sinon      = require("sinon");
-var expect     = require("chai").expect;
-var FileLoader = require("file_loader");
+var check          = require("./support/asyncCheck");
+var sinon          = require("sinon");
+var chai           = require("chai");
+var expect         = chai.expect;
+var AssertionError = chai.AssertionError;
+var FileLoader     = require("file_loader");
+var fakeTimeout    = 10;
+
+function fakeOnError(url, response) {
+  setTimeout(function() {
+    Ti.Network._requestURLs[url].onerror({error: response});
+  }, fakeTimeout);
+}
+
+function fakeOnLoad(url, response) {
+  setTimeout(function() {
+    Ti.Network._requestURLs[url].onload.call(response, {source: response});
+  }, fakeTimeout);
+}
+
+function fakeOnDataStream(url, response) {
+  setTimeout(function() {
+    Ti.Network._requestURLs[url].ondatastream({progress: response});
+  }, fakeTimeout);
+}
 
 describe("FileLoader#download", function() {
   var sandbox = sinon.sandbox.create();
-  var FakeHTTPClient = {
-    open: function() { },
-    send: function() { }
-  };
   this.timeout(200);
+
+  before(function() {
+    // Use the silly mocking system provided by mockti
+    Ti.Network.fakeRequests = true;
+    Ti.Network.online = true;
+  });
+
+  after(function() {
+    Ti.Network.fakeRequests = false;
+  });
 
   beforeEach(function() {
     this.test_data = "test data";
@@ -21,21 +48,18 @@ describe("FileLoader#download", function() {
     };
     this.url = "http://example.com/test_file.png";
 
-    this.fileWriteStub    = sandbox.stub(FileLoader.File.prototype, "write").returns(true);
-    this.fileExistsStub   = sandbox.stub(FileLoader.File.prototype, "exists");
-    this.fileExpiredStub  = sandbox.stub(FileLoader.File.prototype, "expired");
-    this.httpClientMock   = sandbox.mock(FakeHTTPClient);
-    this.createClientStub = sandbox.stub(Ti.Network, "createHTTPClient")
-      .returns(FakeHTTPClient);
+    this.fileWriteStub   = sandbox.stub(FileLoader.File.prototype, "write").returns(true);
+    this.fileExistsStub  = sandbox.stub(FileLoader.File.prototype, "exists");
+    this.fileExpiredStub = sandbox.stub(FileLoader.File.prototype, "expired");
+    this.createClientSpy = sandbox.spy(Ti.Network, "createHTTPClient");
 
-    Ti.Network.online = true;
     FileLoader.setupTaskStack(); // Force a fresh queue for testing
   });
 
   afterEach(function() {
-    this.httpClientMock.verify();
     sandbox.restore();
     Ti.Network.online = true;
+    Ti.Network._clear();
   });
 
   it("rejects the promise when network unavailable", function(done) {
@@ -44,31 +68,32 @@ describe("FileLoader#download", function() {
     FileLoader.download("http://test.example.com/image.png")
       .fail(function(reason) {
         check(done, function() {
-          expect( test.createClientStub.called ).to.be.false;
+          sinon.assert.notCalled(test.createClientSpy);
           expect( reason ).to.match(/offline/i);
         });
       }).done();
   });
 
   it("rejects the promise when there is a network error", function(done) {
-    this.createClientStub.yieldsToAsync("onerror", "test_error");
-    FileLoader.download("http://test.example.com/image.png")
-      .fail(function(reason) {
+    FileLoader.download(this.url)
+      .then(function(val) {
+        done(new AssertionError("expected promise to be rejected (" + val + ")"));
+      }, function(reason) {
         check(done, function() {
-          expect( reason ).to.equal("test_error");
+          expect( reason ).to.have.property("error", "test_error");
         });
       }).done();
+    fakeOnError(this.url, "test_error");
   });
 
   it("resolves the promise when file data has been written", function(done) {
-    this.createClientStub.yieldsToAsync("onload", {source:{responseData: "xxx"}});
-
-    FileLoader.download("http://test.example.com/image.png")
+    FileLoader.download(this.url)
       .then(function(value) {
         check(done, function() {
           expect( value ).to.be.an.instanceof(FileLoader.File);
         });
       }).done();
+    fakeOnLoad(this.url, this.response);
   });
 
   describe("with cached files", function() {
@@ -78,7 +103,6 @@ describe("FileLoader#download", function() {
       test_file.save();
 
       this.fileExistsStub.returns(true);
-      this.createClientStub.yieldsToAsync("onload", {source: this.response});
     });
 
     it("resolves when file is cached and not expired", function(done) {
@@ -87,8 +111,8 @@ describe("FileLoader#download", function() {
 
       FileLoader.download(this.url).then(function(value) {
         check(done, function() {
-          expect( test.createClientStub.called ).to.be.false;
-          expect( test.fileWriteStub.called ).to.be.false;
+          sinon.assert.notCalled(test.createClientSpy);
+          sinon.assert.notCalled(test.fileWriteStub);
         });
       }).done();
     });
@@ -100,10 +124,12 @@ describe("FileLoader#download", function() {
 
       FileLoader.download(this.url).then(function(value) {
         check(done, function() {
-          expect( test.createClientStub.called ).to.be.true;
-          expect( test.fileWriteStub.called ).to.be.true;
+          sinon.assert.called(test.createClientSpy);
+          sinon.assert.called(test.fileWriteStub);
         });
       }).done();
+
+      fakeOnLoad(this.url, this.response);
     });
 
     it("does not write file when data has not changed", function(done) {
@@ -112,10 +138,12 @@ describe("FileLoader#download", function() {
 
       FileLoader.download(this.url).then(function(value) {
         check(done, function() {
-          expect( test.createClientStub.called ).to.be.true;
-          expect( test.fileWriteStub.called ).to.be.false;
+          sinon.assert.called(test.createClientSpy);
+          sinon.assert.notCalled(test.fileWriteStub);
         });
       }).done();
+
+      fakeOnLoad(this.url, this.response);
     });
   });
 
@@ -130,7 +158,7 @@ describe("FileLoader#download", function() {
 
     setTimeout(function() {
       check(done, function() {
-        expect( test.createClientStub.callCount ).to.equal(Ti.App.cache_requests);
+        sinon.assert.callCount(test.createClientSpy, Ti.App.cache_requests);
       });
     }, 10);
   });
@@ -138,26 +166,23 @@ describe("FileLoader#download", function() {
   // FIXME: This feature has been removed and needs to be reinvented.
   it.skip("notifies promise while recieving network data", function(done) {
     var test = this;
-    FileLoader.download("a").progress(function(value) {
+    FileLoader.download(this.url).progress(function(value) {
       check(done, function() {
         expect( value ).to.have.property("progress", 0.9);
       });
     }).done();
-
-    setTimeout(function() {
-      var ondatastream = test.createClientStub.getCall(0).args[0].ondatastream;
-      ondatastream({progress: 0.9});
-    }, 10);
+    fakeOnDataStream(this.url, 0.9);
   });
 
   it("handles HTTPClient options", function(done) {
-    var _this = this;
-    this.createClientStub.yieldsToAsync("onload", {source: this.response});
-    FileLoader.download("x", { username: "bob" }).then(function() {
+    var test = this;
+    FileLoader.download(this.url, { username: "bob" }).then(function() {
       check(done, function() {
-        sinon.assert.calledWith(_this.createClientStub, sinon.match.has("username", "bob"));
+        sinon.assert.calledWith(test.createClientSpy, sinon.match.has("username", "bob"));
       });
     }).done();
+
+    fakeOnLoad(this.url, this.response);
   });
 
 });
