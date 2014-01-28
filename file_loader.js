@@ -330,8 +330,8 @@ function promisedHTTPClient(url, options) {
   var httpClientOptions = { timeout: HTTP_TIMEOUT };
   extendObj(httpClientOptions, options);
   extendObj(httpClientOptions, {
-    onload:       waitForHttp.resolve,
-    onerror:      waitForHttp.reject,
+    onload:       handleOnLoad(waitForHttp),
+    onerror:      handleOnError(waitForHttp),
     ondatastream: waitForHttp.notify,
     autoRedirect: false
   });
@@ -339,6 +339,20 @@ function promisedHTTPClient(url, options) {
   http.open("GET", url);
   http.send();
   return waitForHttp.promise;
+}
+
+// handleOnLoad (private) {{{2
+function handleOnLoad(defer) {
+  return function(e) {
+    defer.resolve(this);
+  };
+}
+
+// handleOnError (private) {{{2
+function handleOnError(defer) {
+  return function(e) {
+    defer.reject(e);
+  };
 }
 
 // FileLoader.download - Attempt to download and cache URL {{{2
@@ -379,7 +393,6 @@ FileLoader.download = function(url, args) {
       // Ti.API.debug("Downloading " + url + ": " + file); // DEBUG
       return promisedHTTPClient(url, args);
     })
-    .get("source")
     .get("responseData")
     .then(function(data) {
       var md5sum = File.getMD5(data);
