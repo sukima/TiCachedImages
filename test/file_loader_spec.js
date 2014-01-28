@@ -223,18 +223,18 @@ describe("FileLoader#download", function() {
           });
       }
 
-      FileLoader.download(this.url)
+      var downloadPromise = FileLoader.download(this.url)
         .then(function() {
           check(done, asserts);
-        }, function(err) {
-          done(new AssertionError("expected promise to be fulfilled: " + err));
-        }).done();
+        });
 
       for (hops = 0; hops < redirectHops; hops++) {
         chainNextStatus(hops, redirectCode);
       }
 
       chainNextStatus(hops, 200);
+
+      return downloadPromise;
     }
 
     [301, 302].forEach(function(redirectCode) {
@@ -243,7 +243,9 @@ describe("FileLoader#download", function() {
         testRedirect.call(this, done, redirectCode, 1, function() {
           sinon.assert.calledTwice(test.createClientSpy);
           expect( Ti.Network._requestURLs ).to.have.property("test_location");
-        });
+        }).fail(function(err) {
+          done(new AssertionError("expected promise to be fulfilled: " + err));
+        }).done();
       });
     });
 
@@ -253,7 +255,9 @@ describe("FileLoader#download", function() {
         // Three 302 hops + One 200 response = 4
         sinon.assert.callCount(test.createClientSpy, 4);
         expect( Ti.Network._requestURLs ).to.have.property("test_location");
-      });
+      }).fail(function(err) {
+        done(new AssertionError("expected promise to be fulfilled: " + err));
+      }).done();
     });
   });
 });
