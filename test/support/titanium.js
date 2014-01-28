@@ -2,5 +2,6 @@ var mockti = require("mockti");
 
 global.Ti = global.Titanium = mockti();
 
-// Force max requests to a low number for testing.
-Ti.App.cache_requests = 2;
+// Force maximums to a low number for testing.
+Ti.App.cache_requests      = 2;
+Ti.App.cache_max_redirects = 5;

@@ -255,5 +255,16 @@ describe("FileLoader#download", function() {
         done(new AssertionError("expected promise to be fulfilled: " + err));
       }).done();
     });
+
+    it("will not allow more then max redirects", function(done) {
+      var test = this;
+      testRedirect.call(this, done, 302, 6, function() {
+        throw new AssertionError("expected promise to be rejected");
+      }).fail(function(reason) {
+        check(done, function() {
+          expect( reason ).to.match(/max/i);
+        });
+      }).done();
+    });
   });
 });
