@@ -188,18 +188,10 @@ describe("FileLoader#download", function() {
 
   describe("Redirects", function() {
     beforeEach(function() {
-      // Use a getter to adjust the status code based on number of times accessed.
-      // This is to simulate a server that would first offer a redirect code
-      // and on the next URL offer a 200.
       this.response = {
-        _statusCount:    0,
-        _redirectHops:   1,
-        _redirectStatus: 302,
-        responseData:    "test_data",
-        location:        "test_location",
-        get status() {
-          return ((++this._statusCount) <= this._redirectHops) ? this._redirectStatus : 200;
-        }
+        status:       200,
+        responseData: "test_data",
+        location:     "test_location",
       };
     });
 
@@ -209,6 +201,39 @@ describe("FileLoader#download", function() {
       Q.delay(fakeTimeout).then(function() {
         check(done, function() {
           sinon.assert.calledWith(test.createClientSpy, sinon.match.has("autoRedirect", false));
+        });
+      });
+    });
+
+    function fakeRedirectedOnLoad(index, response) {
+      Q.delay(fakeTimeout).then(function() {
+        Ti.Network._requests[index].onload.call(response);
+      });
+    }
+
+    function testRedirect(done, redirectCode, asserts) {
+      var test = this;
+      this.response._redirectStatus = redirectCode;
+      FileLoader.download(this.url).then(function() {
+        check(done, asserts);
+      }, function(err) {
+        done(new AssertionError("expected promise to be fulfilled: " + err));
+      }).done();
+      Q.delay(fakeTimeout).then(function() {
+        test.response.status = redirectCode;
+        Ti.Network._requests[0].onload.call(test.response);
+      }).delay(fakeTimeout).then(function() {
+        test.response.status = 200;
+        Ti.Network._requests[1].onload.call(test.response);
+      });
+    }
+
+    [301, 302].forEach(function(redirectCode) {
+      it("handles a " + redirectCode + " redirect", function(done) {
+        var test = this;
+        testRedirect.call(this, done, redirectCode, function() {
+          sinon.assert.calledTwice(test.createClientSpy);
+          expect( Ti.Network._requestURLs ).to.have.property("test_location");
         });
       });
     });

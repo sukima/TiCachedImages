@@ -344,7 +344,14 @@ function promisedHTTPClient(url, options) {
 // handleOnLoad (private) {{{2
 function handleOnLoad(defer) {
   return function(e) {
-    defer.resolve(this);
+    if (this.status >= 300 && this.status < 400 && this.status !== 304) {
+      defer.resolve(promisedHTTPClient(this.location));
+    }
+    else {
+      // Any other error status like 500 should have triggered onError and not
+      // gotton here.
+      defer.resolve(this);
+    }
   };
 }
 
