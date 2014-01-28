@@ -233,15 +233,17 @@ describe("FileLoader#download", function() {
       return downloadPromise;
     }
 
-    [301, 302].forEach(function(redirectCode) {
-      it("handles a " + redirectCode + " redirect", function(done) {
-        var test = this;
-        testRedirect.call(this, done, redirectCode, 1, function() {
-          sinon.assert.calledTwice(test.createClientSpy);
-          expect( Ti.Network._requestURLs ).to.have.property("test_location");
-        }).fail(function(err) {
-          done(new AssertionError("expected promise to be fulfilled: " + err));
-        }).done();
+    [300, 301, 302, 305, 306, 307].forEach(function(redirectCode) {
+      describe(redirectCode + " redirect", function() {
+        it("uses the location header and trys again", function(done) {
+          var test = this;
+          testRedirect.call(this, done, redirectCode, 1, function() {
+            sinon.assert.calledTwice(test.createClientSpy);
+            expect( Ti.Network._requestURLs ).to.have.property("test_location");
+          }).fail(function(err) {
+            done(new AssertionError("expected promise to be fulfilled: " + err));
+          }).done();
+        });
       });
     });
 
