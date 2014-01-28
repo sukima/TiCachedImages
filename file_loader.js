@@ -345,7 +345,8 @@ function promisedHTTPClient(url, options, hops) {
     onload:       handleOnLoad(waitForHttp, options, hops),
     onerror:      handleOnError(waitForHttp),
     ondatastream: waitForHttp.notify,
-    autoRedirect: false
+    autoRedirect: false,
+    cache:        true
   });
 
   var http = Ti.Network.createHTTPClient(httpClientOptions);

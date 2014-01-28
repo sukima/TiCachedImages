@@ -191,12 +191,22 @@ describe("FileLoader#download", function() {
       this.response.location = "test_location";
     });
 
-    it("does not use the built-in autoRedirect", function(done) {
+    it("does not use the built-in autoRedirect option", function(done) {
       var test = this;
       FileLoader.download("a").done();
       Q.delay(fakeTimeout).then(function() {
         check(done, function() {
           sinon.assert.calledWith(test.createClientSpy, sinon.match.has("autoRedirect", false));
+        });
+      });
+    });
+
+    it("uses the built-in cache option", function(done) {
+      var test = this;
+      FileLoader.download("a").done();
+      Q.delay(fakeTimeout).then(function() {
+        check(done, function() {
+          sinon.assert.calledWith(test.createClientSpy, sinon.match.has("cache", true));
         });
       });
     });
