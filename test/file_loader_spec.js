@@ -165,7 +165,7 @@ describe("FileLoader#download", function() {
   });
 
   // FIXME: This feature has been removed and needs to be reinvented.
-  it.skip("notifies promise while recieving network data", function(done) {
+  it.skip("notifies promise while receiving network data", function(done) {
     var test = this;
     FileLoader.download(this.url).progress(function(value) {
       check(done, function() {
@@ -202,7 +202,7 @@ describe("FileLoader#download", function() {
       });
     });
 
-    it("uses the built-in cache option", function(done) {
+    it("uses the built-in cache option (304 redirect support)", function(done) {
       var test = this;
       FileLoader.download("a").done();
       Q.delay(fakeTimeout).then(function() {
