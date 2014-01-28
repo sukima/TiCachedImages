@@ -246,5 +246,14 @@ describe("FileLoader#download", function() {
         });
       });
     });
+
+    it("handles more then one redirect", function(done) {
+      var test = this;
+      testRedirect.call(this, done, 302, 3, function() {
+        // Three 302 hops + One 200 response = 4
+        sinon.assert.callCount(test.createClientSpy, 4);
+        expect( Ti.Network._requestURLs ).to.have.property("test_location");
+      });
+    });
   });
 });
