@@ -188,7 +188,8 @@ describe("FileLoader#download", function() {
 
   describe("Redirects", function() {
     beforeEach(function() {
-      this.response.location = "test_location";
+      this.response.getResponseHeader = sinon.stub()
+        .withArgs("Location").returns("test_location");
     });
 
     it("does not use the built-in autoRedirect option", function(done) {

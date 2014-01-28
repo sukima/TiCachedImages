@@ -359,8 +359,10 @@ function promisedHTTPClient(url, options, hops) {
 // handleOnLoad (private) {{{2
 function handleOnLoad(defer, options, hops) {
   return function(e) {
+    // Ti.API.debug("onLoad: " + this.status); // DEBUG
     if (this.status >= 300 && this.status < 400 && this.status !== 304) {
-      defer.resolve(promisedHTTPClient(this.location, options, (hops + 1)));
+      // Ti.API.debug("  Location: " + this.getResponseHeader("Location")); // DEBUG
+      defer.resolve(promisedHTTPClient(this.getResponseHeader("Location"), options, (hops + 1)));
     }
     else {
       // The download function should handle 304 status as this is a caching
