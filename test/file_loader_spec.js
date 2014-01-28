@@ -211,27 +211,36 @@ describe("FileLoader#download", function() {
       });
     }
 
-    function testRedirect(done, redirectCode, asserts) {
-      var test = this;
-      this.response._redirectStatus = redirectCode;
-      FileLoader.download(this.url).then(function() {
-        check(done, asserts);
-      }, function(err) {
-        done(new AssertionError("expected promise to be fulfilled: " + err));
-      }).done();
-      Q.delay(fakeTimeout).then(function() {
-        test.response.status = redirectCode;
-        Ti.Network._requests[0].onload.call(test.response);
-      }).delay(fakeTimeout).then(function() {
-        test.response.status = 200;
-        Ti.Network._requests[1].onload.call(test.response);
-      });
+    function testRedirect(done, redirectCode, redirectHops, asserts) {
+      var hops, worker = Q(), test = this;
+
+      function chainNextStatus(index, status) {
+        worker
+          .delay(fakeTimeout)
+          .then(function() {
+            test.response.status = status;
+            Ti.Network._requests[index].onload.call(test.response);
+          });
+      }
+
+      FileLoader.download(this.url)
+        .then(function() {
+          check(done, asserts);
+        }, function(err) {
+          done(new AssertionError("expected promise to be fulfilled: " + err));
+        }).done();
+
+      for (hops = 0; hops < redirectHops; hops++) {
+        chainNextStatus(hops, redirectCode);
+      }
+
+      chainNextStatus(hops, 200);
     }
 
     [301, 302].forEach(function(redirectCode) {
       it("handles a " + redirectCode + " redirect", function(done) {
         var test = this;
-        testRedirect.call(this, done, redirectCode, function() {
+        testRedirect.call(this, done, redirectCode, 1, function() {
           sinon.assert.calledTwice(test.createClientSpy);
           expect( Ti.Network._requestURLs ).to.have.property("test_location");
         });
