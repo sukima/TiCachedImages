@@ -6,24 +6,25 @@ var chai           = require("chai");
 var expect         = chai.expect;
 var AssertionError = chai.AssertionError;
 var FileLoader     = require("file_loader");
+var Q              = require("q");
 var fakeTimeout    = 10;
 
 function fakeOnError(url, response) {
-  setTimeout(function() {
+  Q.delay(fakeTimeout).then(function() {
     Ti.Network._requestURLs[url].onerror({error: response});
-  }, fakeTimeout);
+  });
 }
 
 function fakeOnLoad(url, response) {
-  setTimeout(function() {
-    Ti.Network._requestURLs[url].onload.call(response, {source: response});
-  }, fakeTimeout);
+  Q.delay(fakeTimeout).then(function() {
+    Ti.Network._requestURLs[url].onload.call(response);
+  });
 }
 
 function fakeOnDataStream(url, response) {
-  setTimeout(function() {
+  Q.delay(fakeTimeout).then(function() {
     Ti.Network._requestURLs[url].ondatastream({progress: response});
-  }, fakeTimeout);
+  });
 }
 
 describe("FileLoader#download", function() {
@@ -156,11 +157,11 @@ describe("FileLoader#download", function() {
     FileLoader.download("d");
     FileLoader.download("e");
 
-    setTimeout(function() {
+    Q.delay(fakeTimeout).then(function() {
       check(done, function() {
         sinon.assert.callCount(test.createClientSpy, Ti.App.cache_requests);
       });
-    }, 10);
+    });
   });
 
   // FIXME: This feature has been removed and needs to be reinvented.
@@ -205,11 +206,11 @@ describe("FileLoader#download", function() {
     it("does not use the built-in autoRedirect", function(done) {
       var test = this;
       FileLoader.download("a").done();
-      setTimeout(function() {
+      Q.delay(fakeTimeout).then(function() {
         check(done, function() {
           sinon.assert.calledWith(test.createClientSpy, sinon.match.has("autoRedirect", false));
         });
-      }, fakeTimeout);
+      });
     });
   });
 });
