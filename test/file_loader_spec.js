@@ -188,11 +188,7 @@ describe("FileLoader#download", function() {
 
   describe("Redirects", function() {
     beforeEach(function() {
-      this.response = {
-        status:       200,
-        responseData: "test_data",
-        location:     "test_location",
-      };
+      this.response.location = "test_location";
     });
 
     it("does not use the built-in autoRedirect", function(done) {
