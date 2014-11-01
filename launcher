@@ -1,3 +1,5 @@
+#!/usr/bin/env coffee
+
 Q                       = require("q")
 {resolve,join:joinPath} = require("path")
 {spawn,exec}            = require("child_process")

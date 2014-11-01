@@ -129,6 +129,8 @@
 //                       `applicationSupportDirectory` is prefixed. on all
 //                       others the `applicationDataDirectory` is prefixed.
 // - `cache_requests` - The number of simultaneous network requests allowed.
+// - `cache_max_redirects - The maximum number of redirects to follow before
+//                          giving up.
 //
 // [1]: http://developer.appcelerator.com/question/125483/how-to-create-a-generic-image-cache-sample-code#answer-218718
 // [2]: https://github.com/then/promise
@@ -151,10 +153,11 @@ var CACHE_METADATA_PROPERTY, EXPIRATION_TIME, CACHE_PATH_PREFIX, MAX_ASYNC_TASKS
     }
   }
 
-  CACHE_METADATA_PROPERTY = loadConfig("cache_property_key") || "file_loader_cache_metadata";
-  CACHE_PATH_PREFIX       = loadConfig("cache_directory")    || "cached_files";
-  EXPIRATION_TIME         = loadConfig("cache_expiration")   || 3600000; // 60 minutes
-  MAX_ASYNC_TASKS         = loadConfig("cache_requests")     || 10;
+  CACHE_METADATA_PROPERTY = loadConfig("cache_property_key")  || "file_loader_cache_metadata";
+  CACHE_PATH_PREFIX       = loadConfig("cache_directory")     || "cached_files";
+  EXPIRATION_TIME         = loadConfig("cache_expiration")    || 3600000; // 60 minutes
+  MAX_ASYNC_TASKS         = loadConfig("cache_requests")      || 10;
+  MAX_REDIRECT_HOPS       = loadConfig("cache_max_redirects") || 5;
 
 })(Ti.App);
 
@@ -325,19 +328,56 @@ function dispatchNextTask() {
 }
 
 // promisedHTTPClient (private) {{{2
-function promisedHTTPClient(url, options) {
+function promisedHTTPClient(url, options, hops) {
+  /* jshint eqnull:true */
+  if (hops == null) { hops = 0; }
+
   var waitForHttp = Promise.defer();
+
+  if (hops > MAX_REDIRECT_HOPS) {
+    waitForHttp.reject(new Error("Maximum redirects reached (" + MAX_REDIRECT_HOPS + ")"));
+    return waitForHttp.promise;
+  }
+
   var httpClientOptions = { timeout: HTTP_TIMEOUT };
   extendObj(httpClientOptions, options);
   extendObj(httpClientOptions, {
-    onload:       waitForHttp.resolve,
-    onerror:      waitForHttp.reject,
-    ondatastream: waitForHttp.notify
+    onload:       handleOnLoad(waitForHttp, options, hops),
+    onerror:      handleOnError(waitForHttp),
+    ondatastream: waitForHttp.notify,
+    autoRedirect: false,
+    cache:        true
   });
+
   var http = Ti.Network.createHTTPClient(httpClientOptions);
   http.open("GET", url);
   http.send();
+
   return waitForHttp.promise;
+}
+
+// handleOnLoad (private) {{{2
+function handleOnLoad(defer, options, hops) {
+  return function(e) {
+    // Ti.API.debug("onLoad: " + this.status); // DEBUG
+    if (this.status >= 300 && this.status < 400 && this.status !== 304) {
+      // Ti.API.debug("  Location: " + this.getResponseHeader("Location")); // DEBUG
+      defer.resolve(promisedHTTPClient(this.getResponseHeader("Location"), options, (hops + 1)));
+    }
+    else {
+      // The download function should handle 304 status as this is a caching
+      // responsibility not a fetching responsibility. Any other error status
+      // like 500 should have triggered onError and not have gotton here.
+      defer.resolve(this);
+    }
+  };
+}
+
+// handleOnError (private) {{{2
+function handleOnError(defer) {
+  return function(e) {
+    defer.reject(e);
+  };
 }
 
 // FileLoader.download - Attempt to download and cache URL {{{2
@@ -378,7 +418,6 @@ FileLoader.download = function(url, args) {
       // Ti.API.debug("Downloading " + url + ": " + file); // DEBUG
       return promisedHTTPClient(url, args);
     })
-    .get("source")
     .get("responseData")
     .then(function(data) {
       var md5sum = File.getMD5(data);
